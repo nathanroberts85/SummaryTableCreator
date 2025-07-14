@@ -8,6 +8,7 @@ using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Wordprocessing;
 using SummaryTableCreator.Models;
 using SummaryTableCreator.UI;
+using SummaryTableCreator.Recommendations;
 
 namespace SummaryTableCreator.Parser
 {
@@ -17,6 +18,22 @@ namespace SummaryTableCreator.Parser
     /// </summary>
     public class HeadingParser
     {
+        private RecommendationDatabase? _recommendationDb;
+
+        public HeadingParser()
+        {
+            // Don't create the database in constructor
+        }
+
+        private RecommendationDatabase GetRecommendationDatabase()
+        {
+            if (_recommendationDb == null)
+            {
+                _recommendationDb = new RecommendationDatabase();
+            }
+            return _recommendationDb;
+        }
+
         /// <summary>
         /// Parses the document for issues under the specified section number, incrementing phase and issue counters
         /// according to Heading2 and Heading3 styles, and extracts CVSS scores from the following table.
@@ -101,12 +118,15 @@ namespace SummaryTableCreator.Parser
                             if (next is Table table)
                                 cvss = ExtractCvssFromTable(table);
 
+                            // Get recommendation from database (lazy initialization)
+                            var recommendation = GetRecommendationDatabase().GetRecommendation(issueText);
+
                             yield return new HeadingResult
                             {
                                 Issue = issueText,
                                 Reference = reference,
                                 CvssScore = cvss,
-                                Recommendation = string.Empty,
+                                Recommendation = recommendation,
                                 IsPhaseHeader = false
                             };
                         }

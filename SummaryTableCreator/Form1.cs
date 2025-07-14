@@ -17,11 +17,24 @@ namespace SummaryTableCreator
             InitializeComponent();
             Logger.Initialize(rtb_log);
             _parser = new HeadingParser();  // Ensure parser is instantiated
+            lbl_section_start.Enabled = false; // Disable section start label
+            nud_report_section.Enabled = false; // Disable numeric up-down for section selection
+            btn_extract.Enabled = false; // Disable extract button until import
+            cb_cvss.Enabled = false; // Disable CVSS checkbox until extraction
+            cb_cvss_score.Enabled = false; // Disable CVSS score checkbox until extraction
             btn_generate_table.Enabled = false;
+            
         }
 
         private void btn_import_Click(object sender, EventArgs e)
         {
+            Logger.Clear();
+            lbl_section_start.Enabled = false; // Disable section start label
+            nud_report_section.Enabled = false; // Disable numeric up-down for section selection
+            btn_extract.Enabled = false; // Disable extract button until import
+            cb_cvss.Enabled = false; // Disable CVSS checkbox until extraction
+            cb_cvss_score.Enabled = false; // Disable CVSS score checkbox until extraction
+            btn_generate_table.Enabled = false;
             using (var dlg = new OpenFileDialog())
             {
                 dlg.Filter = "Word Documents|*.docx";
@@ -36,6 +49,9 @@ namespace SummaryTableCreator
                         Logger.Info("[+] Selected file: " + path);
                         _importer.Import(path);
                         Logger.Okay("[+] Import completed\n");
+                        lbl_section_start.Enabled = true;
+                        nud_report_section.Enabled = true;
+                        btn_extract.Enabled = true;
                     }
                     catch (Exception ex)
                     {
