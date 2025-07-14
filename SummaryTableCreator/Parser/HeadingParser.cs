@@ -70,6 +70,17 @@ namespace SummaryTableCreator.Parser
                         {
                             phaseCounter++;
                             issueCounter = 0;
+                            
+                            // Capture Heading2 data for summary table
+                            yield return new HeadingResult
+                            {
+                                Issue = text.Trim(),
+                                Reference = $"{sectionNumber}.{phaseCounter}",
+                                CvssScore = null,
+                                Recommendation = string.Empty,
+                                IsPhaseHeader = true
+                            };
+                            
                             Logger.Info($"[+] Phase {phaseCounter} started");
                             continue;
                         }
@@ -95,7 +106,8 @@ namespace SummaryTableCreator.Parser
                                 Issue = issueText,
                                 Reference = reference,
                                 CvssScore = cvss,
-                                Recommendation = string.Empty
+                                Recommendation = string.Empty,
+                                IsPhaseHeader = false
                             };
                         }
                     }

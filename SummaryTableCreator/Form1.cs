@@ -18,25 +18,10 @@ namespace SummaryTableCreator
             Logger.Initialize(rtb_log);
             _parser = new HeadingParser();  // Ensure parser is instantiated
             btn_generate_table.Enabled = false;
-            lbl_section_start.Enabled = false;
-            btn_extract.Enabled = false;
-            nud_report_section.Enabled = false;
-            cb_cvss.Enabled = false;
-            cb_cvss_score.Enabled = false;
         }
 
         private void btn_import_Click(object sender, EventArgs e)
         {
-            // Clear previous results and log
-            _results = null;
-            lbl_filepath.Text = string.Empty;
-            Logger.Clear();
-            btn_extract.Enabled = false;
-            lbl_section_start.Enabled = false;
-            btn_generate_table.Enabled = false;
-            nud_report_section.Enabled = false;
-            cb_cvss.Enabled = false;
-            cb_cvss_score.Enabled = false;
             using (var dlg = new OpenFileDialog())
             {
                 dlg.Filter = "Word Documents|*.docx";
@@ -48,12 +33,9 @@ namespace SummaryTableCreator
                     lbl_filepath.Text = path;
                     try
                     {
-                        //Logger.Info("Selected file: " + path);
+                        Logger.Info("[+] Selected file: " + path);
                         _importer.Import(path);
-                        Logger.Okay("[+] Import completed.");
-                        btn_extract.Enabled = true;
-                        lbl_section_start.Enabled = true;
-                        nud_report_section.Enabled = true;
+                        Logger.Okay("[+] Import completed\n");
                     }
                     catch (Exception ex)
                     {
@@ -78,15 +60,15 @@ namespace SummaryTableCreator
                 Logger.Info($"[+] Extracting section {sectionLevel} from {filePath}");
 
                 _results = _parser.Parse(filePath, sectionLevel).ToList();
-                Logger.Okay($"\n[+] Parsed {_results.Count} headings\n");
+                // Count phases and issues separately
+                var phases = _results.Where(r => r.IsPhaseHeader).Count();
+                var issues = _results.Where(r => !r.IsPhaseHeader).Count();
 
-                // Detailed logging of each heading (for testing/debugging)
-                //foreach (var result in _results)
-                //{
-                //    Logger.Info(
-                //        $"Found heading: Ref={result.Reference}, Issue='{result.Issue}', CVSS={(result.CvssScore.HasValue ? result.CvssScore.Value.ToString() : "N/A")}"
-                //    );
-                //}
+                Logger.Okay($"\n[+] Found {phases} Phases");
+                Logger.Okay($"[+] Found {issues} Issues\n");
+
+                //Logger.Okay($"\n[+] Parsed {_results.Count} headings\n");
+
 
                 btn_generate_table.Enabled = _results.Any();
                 cb_cvss.Enabled = true; // Enable CVSS checkbox
@@ -111,7 +93,13 @@ namespace SummaryTableCreator
                 // Use template-based generation (assuming simplified rating for now)
                 bool useSingleLevel = cb_cvss.Checked; // You can add a checkbox for this later
                 bool showCvssScore = cb_cvss_score.Checked; // Read from checkbox to show CVSS scores in brackets
+                
+                // Generate detailed summary table
                 SummaryReportGenerator.Generate(lbl_filepath.Text, _results, useSingleLevel, showCvssScore);
+                
+                // Generate issue summary table
+                IssueSummaryReportGenerator.Generate(lbl_filepath.Text, _results, useSingleLevel);
+                
                 //Logger.Okay("[+] Summary table generated successfully using template.");
             }
             catch (Exception ex)

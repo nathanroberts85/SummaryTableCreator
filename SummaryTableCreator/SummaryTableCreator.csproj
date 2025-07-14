@@ -9,10 +9,15 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Resources\IssueSummaryTableTemplate.docx" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="DocumentFormat.OpenXml" Version="3.3.0" />
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="Resources\IssueSummaryTableTemplate.docx" />
     <EmbeddedResource Include="Resources\SummaryTableTemplate.docx" />
   </ItemGroup>
 

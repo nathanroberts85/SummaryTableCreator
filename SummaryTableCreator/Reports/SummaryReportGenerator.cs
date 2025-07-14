@@ -47,10 +47,9 @@ namespace SummaryTableCreator.Reports
             // Determine output path
             var folder = Path.GetDirectoryName(originalPath) ?? string.Empty;
             var fileName = Path.GetFileNameWithoutExtension(originalPath);
-            var outputPath = Path.Combine(folder, fileName + "_summary.docx");
+            var outputPath = Path.Combine(folder, "SummaryTable.docx");
 
-            //Logger.Info($"Creating summary report from template: {outputPath}");
-            Logger.Info($"[+] Using {(useSingleLevelCvss ? "Non-CHECK" : "CHECK")} CVSS rating system");
+            Logger.Info($"[+] Using {(useSingleLevelCvss ? "CHECK" : "Non-CHECK")} CVSS rating system");
 
             // Extract template from embedded resources and save to output location
             ExtractTemplateToFile(outputPath);
@@ -102,8 +101,9 @@ namespace SummaryTableCreator.Reports
                 throw new InvalidOperationException("No table found in template.");
             }
 
-            // Sort results by descending CVSS
+            // Sort results by descending CVSS - only include issues, not phase headers
             var ordered = results
+                .Where(r => !r.IsPhaseHeader) // Filter out phase headers
                 .OrderByDescending(r => r.CvssScore ?? 0)
                 .ToList();
 

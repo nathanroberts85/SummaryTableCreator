@@ -19,5 +19,8 @@ namespace SummaryTableCreator.Models
 
         /// <summary>Recommendation text from the database or blank.</summary>
         public string Recommendation { get; set; }
+
+        /// <summary>True if this is a phase header (Heading2), false for issues (Heading3).</summary>
+        public bool IsPhaseHeader { get; set; }
     }
 }
