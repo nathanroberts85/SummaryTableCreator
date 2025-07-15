@@ -62,32 +62,35 @@ namespace SummaryTableCreator.Parser
                 {
                     var style = para.ParagraphProperties?.ParagraphStyleId?.Val?.Value;
                     var text = para.InnerText?.Trim() ?? string.Empty;
+                    var outlineLevel = para.ParagraphProperties?.OutlineLevel?.Val?.Value;
 
                     // Count Heading1 occurrences to detect section by index
-                    if (string.Equals(style, "Heading1", StringComparison.OrdinalIgnoreCase))
+                    if (string.Equals(style, "Heading1", StringComparison.OrdinalIgnoreCase) || 
+                        outlineLevel == 0) // Outline level is 0-indexed, so level 1 = value 0
                     {
                         heading1Count++;
                         if (!insideSection && heading1Count == sectionNumber)
                         {
                             insideSection = true;
-                            Logger.Info($"[+] Entering section {sectionNumber}\n");
+                            Logger.Warning($"\n[+] Entering section {sectionNumber}");
                             continue;
                         }
                         else if (insideSection && heading1Count > sectionNumber)
                         {
-                            Logger.Info($"[+] Exiting section {sectionNumber}");
+                            Logger.Warning($"\n[+] Exiting section {sectionNumber}");
                             break;
                         }
                     }
 
                     if (insideSection)
                     {
-                        // New phase (Heading2)
-                        if (string.Equals(style, "Heading2", StringComparison.OrdinalIgnoreCase))
+                        // New phase (Heading2 or outline level 2)
+                        if (string.Equals(style, "Heading2", StringComparison.OrdinalIgnoreCase) || 
+                            outlineLevel == 1) // Outline level is 0-indexed, so level 2 = value 1
                         {
                             phaseCounter++;
                             issueCounter = 0;
-                            
+
                             // Capture Heading2 data for summary table
                             yield return new HeadingResult
                             {
@@ -97,13 +100,14 @@ namespace SummaryTableCreator.Parser
                                 Recommendation = string.Empty,
                                 IsPhaseHeader = true
                             };
-                            
-                            Logger.Info($"[+] Phase {phaseCounter} started");
+
+                            Logger.Info($"\n[+] Phase {phaseCounter}");
                             continue;
                         }
 
-                        // New issue (Heading3)
-                        if (string.Equals(style, "Heading3", StringComparison.OrdinalIgnoreCase))
+                        // New issue (Heading3 or outline level 3)
+                        if (string.Equals(style, "Heading3", StringComparison.OrdinalIgnoreCase) || 
+                            outlineLevel == 2) // Outline level is 0-indexed, so level 3 = value 2
                         {
                             issueCounter++;
                             var reference = $"{sectionNumber}.{phaseCounter}.{issueCounter}";
@@ -133,15 +137,6 @@ namespace SummaryTableCreator.Parser
                     }
                 }
             }
-        }
-
-        /// <summary>
-        /// Extracts the first token of the heading text as the numeric reference.
-        /// </summary>
-        private string ExtractReference(string headingText)
-        {
-            var token = headingText.Split(new[] { ' ', '\t' }, 2)[0];
-            return Regex.IsMatch(token, "^\\d+(\\.\\d+)*$") ? token : string.Empty;
         }
 
         /// <summary>

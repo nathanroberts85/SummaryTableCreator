@@ -93,6 +93,13 @@ namespace SummaryTableCreator
             catch (Exception ex)
             {
                 Logger.Error("[!] Parsing failed: Have you imported a document?");
+                // Show the actual exception details instead of generic message
+                Logger.Error($"[!] Parsing failed: {ex.Message}");
+                Logger.Error($"[!] Exception type: {ex.GetType().Name}");
+                if (ex.InnerException != null)
+                {
+                    Logger.Error($"[!] Inner exception: {ex.InnerException.Message}");
+                }
             }
         }
 

@@ -163,6 +163,7 @@
             Controls.Add(btn_import);
             Controls.Add(rtb_log);
             Controls.Add(pictureBox1);
+            MinimumSize = new Size(825, 595);
             Name = "Form1";
             StartPosition = FormStartPosition.CenterScreen;
             Text = "Form1";
