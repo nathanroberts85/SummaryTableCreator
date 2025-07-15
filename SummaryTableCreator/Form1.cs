@@ -46,7 +46,7 @@ namespace SummaryTableCreator
                     lbl_filepath.Text = path;
                     try
                     {
-                        Logger.Info("[+] Selected file: " + path);
+                       // Logger.Info("[+] Selected file: " + path);
                         _importer.Import(path);
                         Logger.Okay("[+] Import completed\n");
                         lbl_section_start.Enabled = true;

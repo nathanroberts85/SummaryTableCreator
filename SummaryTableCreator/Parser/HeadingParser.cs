@@ -70,7 +70,7 @@ namespace SummaryTableCreator.Parser
                         if (!insideSection && heading1Count == sectionNumber)
                         {
                             insideSection = true;
-                            Logger.Info($"[+] Entering section {sectionNumber} (Heading1 occurrence #{heading1Count})");
+                            Logger.Info($"[+] Entering section {sectionNumber}\n");
                             continue;
                         }
                         else if (insideSection && heading1Count > sectionNumber)
