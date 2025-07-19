@@ -59,7 +59,7 @@ namespace SummaryTableCreator.Recommendations
             {
                 if (!File.Exists(RECOMMENDATIONS_FILE))
                 {
-                    Logger.Warning($"[!] Recommendations file '{RECOMMENDATIONS_FILE}' not found. Recommendations will be empty.");
+                   // Logger.Warning($"[!] Recommendations file '{RECOMMENDATIONS_FILE}' not found. Recommendations will be empty.");
                     return new Dictionary<string, string>();
                 }
 

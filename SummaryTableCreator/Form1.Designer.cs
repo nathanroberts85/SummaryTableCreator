@@ -163,10 +163,11 @@
             Controls.Add(btn_import);
             Controls.Add(rtb_log);
             Controls.Add(pictureBox1);
+            MaximizeBox = false;
             MinimumSize = new Size(825, 595);
             Name = "Form1";
             StartPosition = FormStartPosition.CenterScreen;
-            Text = "Form1";
+            Text = "vegeTables";
             ((System.ComponentModel.ISupportInitialize)nud_report_section).EndInit();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).EndInit();
             ResumeLayout(false);

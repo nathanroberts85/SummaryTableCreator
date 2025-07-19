@@ -1,6 +1,7 @@
 ﻿// File: Parser/HeadingParser.cs
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using DocumentFormat.OpenXml;
@@ -45,7 +46,29 @@ namespace SummaryTableCreator.Parser
         {
             //Logger.Info($"Parsing document via Open XML: {filePath}");
 
-            using var doc = WordprocessingDocument.Open(filePath, false);
+            string actualFilePath = filePath;
+            string? tempFilePath = null;
+
+            try
+            {
+                // Try to open the file directly first
+                using var testDoc = WordprocessingDocument.Open(filePath, false);
+                testDoc.Dispose();
+            }
+            catch (IOException)
+            {
+                // File is locked, create a temporary copy
+                tempFilePath = Path.GetTempFileName();
+                File.Delete(tempFilePath); // Delete the empty temp file
+                tempFilePath = Path.ChangeExtension(tempFilePath, ".docx");
+                File.Copy(filePath, tempFilePath, true);
+                actualFilePath = tempFilePath;
+                Logger.Warning($"Document is open in Word - using temporary copy for parsing");
+            }
+
+            try
+            {
+                using var doc = WordprocessingDocument.Open(actualFilePath, false);
             var body = doc.MainDocumentPart.Document.Body;
             var elements = body.Elements<OpenXmlElement>()
                 .Where(e => e is Paragraph || e is Table)
@@ -134,6 +157,22 @@ namespace SummaryTableCreator.Parser
                                 IsPhaseHeader = false
                             };
                         }
+                    }
+                }
+            }
+            }
+            finally
+            {
+                // Clean up temporary file if we created one
+                if (tempFilePath != null && File.Exists(tempFilePath))
+                {
+                    try
+                    {
+                        File.Delete(tempFilePath);
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.Warning($"Could not delete temporary file: {ex.Message}");
                     }
                 }
             }
