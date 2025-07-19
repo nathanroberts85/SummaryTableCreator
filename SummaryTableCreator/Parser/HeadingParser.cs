@@ -88,8 +88,9 @@ namespace SummaryTableCreator.Parser
                     var outlineLevel = para.ParagraphProperties?.OutlineLevel?.Val?.Value;
 
                     // Count Heading1 occurrences to detect section by index
-                    if (string.Equals(style, "Heading1", StringComparison.OrdinalIgnoreCase) || 
-                        outlineLevel == 0) // Outline level is 0-indexed, so level 1 = value 0
+                    if ((string.Equals(style, "Heading1", StringComparison.OrdinalIgnoreCase) || 
+                        outlineLevel == 0) && // Outline level is 0-indexed, so level 1 = value 0
+                        !string.IsNullOrWhiteSpace(text)) // Skip empty headings
                     {
                         heading1Count++;
                         if (!insideSection && heading1Count == sectionNumber)
@@ -108,8 +109,9 @@ namespace SummaryTableCreator.Parser
                     if (insideSection)
                     {
                         // New phase (Heading2 or outline level 2)
-                        if (string.Equals(style, "Heading2", StringComparison.OrdinalIgnoreCase) || 
-                            outlineLevel == 1) // Outline level is 0-indexed, so level 2 = value 1
+                        if ((string.Equals(style, "Heading2", StringComparison.OrdinalIgnoreCase) || 
+                            outlineLevel == 1) && // Outline level is 0-indexed, so level 2 = value 1
+                            !string.IsNullOrWhiteSpace(text)) // Skip empty headings
                         {
                             phaseCounter++;
                             issueCounter = 0;
@@ -129,8 +131,9 @@ namespace SummaryTableCreator.Parser
                         }
 
                         // New issue (Heading3 or outline level 3)
-                        if (string.Equals(style, "Heading3", StringComparison.OrdinalIgnoreCase) || 
-                            outlineLevel == 2) // Outline level is 0-indexed, so level 3 = value 2
+                        if ((string.Equals(style, "Heading3", StringComparison.OrdinalIgnoreCase) || 
+                            outlineLevel == 2) && // Outline level is 0-indexed, so level 3 = value 2
+                            !string.IsNullOrWhiteSpace(text)) // Skip empty headings
                         {
                             issueCounter++;
                             var reference = $"{sectionNumber}.{phaseCounter}.{issueCounter}";
