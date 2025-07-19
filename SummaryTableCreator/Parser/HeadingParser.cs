@@ -96,12 +96,12 @@ namespace SummaryTableCreator.Parser
                         if (!insideSection && heading1Count == sectionNumber)
                         {
                             insideSection = true;
-                            Logger.Warning($"\n[+] Entering section {sectionNumber}");
+                            Logger.Info($"\n[+] Entering section {sectionNumber}");
                             continue;
                         }
                         else if (insideSection && heading1Count > sectionNumber)
                         {
-                            Logger.Warning($"\n[+] Exiting section {sectionNumber}");
+                            Logger.Info($"\n[+] Exiting section {sectionNumber}");
                             break;
                         }
                     }

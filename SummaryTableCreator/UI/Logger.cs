@@ -47,7 +47,7 @@ namespace SummaryTableCreator.UI
         /// </summary>
         public static void Info(string message)
         {
-            Log(message, Color.Blue);
+            Log(message, Color.SteelBlue);
         }
 
         /// <summary>

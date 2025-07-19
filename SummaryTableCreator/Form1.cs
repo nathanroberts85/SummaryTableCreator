@@ -24,6 +24,25 @@ namespace SummaryTableCreator
             cb_cvss_score.Enabled = false; // Disable CVSS score checkbox until extraction
             btn_generate_table.Enabled = false;
             
+            // Setup tooltips
+            SetupTooltips();
+        }
+
+        private void SetupTooltips()
+        {
+            // Configure tooltip behavior
+            toolTip1.AutoPopDelay = 5000;  // Show for 5 seconds
+            toolTip1.InitialDelay = 1000;  // Wait 1 second before showing
+            toolTip1.ReshowDelay = 500;    // Wait 0.5 seconds between tooltips
+            toolTip1.ShowAlways = true;    // Show even when form is not active
+
+            // Set tooltips for each control
+            toolTip1.SetToolTip(btn_import, "Select and import a Word document (.docx) for processing");
+            toolTip1.SetToolTip(nud_report_section, "Choose which report section to parse (e.g., section 6)");
+            toolTip1.SetToolTip(btn_extract, "Extract headings and issues from the selected section");
+            toolTip1.SetToolTip(cb_cvss, "Commercial format by default, enable to switch to CHECK format");
+            toolTip1.SetToolTip(cb_cvss_score, "Show numerical CVSS scores for later report compilation");
+            toolTip1.SetToolTip(btn_generate_table, "Outputs the summary tables in new documents in the same folder");
         }
 
         private void btn_import_Click(object sender, EventArgs e)

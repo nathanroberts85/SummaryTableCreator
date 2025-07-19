@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            components = new System.ComponentModel.Container();
             rtb_log = new RichTextBox();
             btn_import = new Button();
             nud_report_section = new NumericUpDown();
@@ -38,6 +39,7 @@
             cb_cvss_score = new CheckBox();
             pictureBox1 = new PictureBox();
             lbl_section_start = new Label();
+            toolTip1 = new ToolTip(components);
             ((System.ComponentModel.ISupportInitialize)nud_report_section).BeginInit();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
             SuspendLayout();
@@ -48,6 +50,7 @@
             rtb_log.BackColor = SystemColors.ActiveCaptionText;
             rtb_log.BorderStyle = BorderStyle.None;
             rtb_log.Font = new Font("Consolas", 11.25F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            rtb_log.ForeColor = Color.White;
             rtb_log.Location = new Point(366, 12);
             rtb_log.Name = "rtb_log";
             rtb_log.Size = new Size(431, 532);
@@ -186,5 +189,6 @@
         private CheckBox cb_cvss_score;
         private PictureBox pictureBox1;
         private Label lbl_section_start;
+        private ToolTip toolTip1;
     }
 }
