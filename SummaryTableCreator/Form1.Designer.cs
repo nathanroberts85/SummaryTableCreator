@@ -50,19 +50,19 @@
             rtb_log.BackColor = SystemColors.ActiveCaptionText;
             rtb_log.BorderStyle = BorderStyle.None;
             rtb_log.Font = new Font("Consolas", 11.25F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            rtb_log.ForeColor = Color.White;
-            rtb_log.Location = new Point(366, 12);
+            rtb_log.ForeColor = Color.SteelBlue;
+            rtb_log.Location = new Point(313, 12);
             rtb_log.Name = "rtb_log";
-            rtb_log.Size = new Size(431, 532);
+            rtb_log.Size = new Size(484, 532);
             rtb_log.TabIndex = 0;
-            rtb_log.Text = "";
+            rtb_log.Text = "[+] Summary of Findings Table Generator";
             // 
             // btn_import
             // 
             btn_import.Font = new Font("Consolas", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
             btn_import.Location = new Point(12, 76);
             btn_import.Name = "btn_import";
-            btn_import.Size = new Size(335, 33);
+            btn_import.Size = new Size(282, 33);
             btn_import.TabIndex = 1;
             btn_import.Text = "Import";
             btn_import.UseVisualStyleBackColor = true;
@@ -83,7 +83,7 @@
             btn_extract.Font = new Font("Consolas", 12F, FontStyle.Bold);
             btn_extract.Location = new Point(13, 206);
             btn_extract.Name = "btn_extract";
-            btn_extract.Size = new Size(334, 29);
+            btn_extract.Size = new Size(281, 29);
             btn_extract.TabIndex = 4;
             btn_extract.Text = "Extract";
             btn_extract.UseVisualStyleBackColor = true;
@@ -94,7 +94,7 @@
             btn_generate_table.Font = new Font("Consolas", 12F, FontStyle.Bold);
             btn_generate_table.Location = new Point(12, 317);
             btn_generate_table.Name = "btn_generate_table";
-            btn_generate_table.Size = new Size(335, 60);
+            btn_generate_table.Size = new Size(282, 60);
             btn_generate_table.TabIndex = 5;
             btn_generate_table.Text = "Generate";
             btn_generate_table.UseVisualStyleBackColor = true;
@@ -105,7 +105,7 @@
             lbl_filepath.Font = new Font("Consolas", 9F, FontStyle.Bold);
             lbl_filepath.Location = new Point(12, 112);
             lbl_filepath.Name = "lbl_filepath";
-            lbl_filepath.Size = new Size(335, 56);
+            lbl_filepath.Size = new Size(282, 56);
             lbl_filepath.TabIndex = 6;
             // 
             // cb_cvss
@@ -135,9 +135,9 @@
             // 
             pictureBox1.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             pictureBox1.BackColor = SystemColors.ActiveCaptionText;
-            pictureBox1.Location = new Point(353, 0);
+            pictureBox1.Location = new Point(300, 0);
             pictureBox1.Name = "pictureBox1";
-            pictureBox1.Size = new Size(456, 559);
+            pictureBox1.Size = new Size(509, 559);
             pictureBox1.TabIndex = 9;
             pictureBox1.TabStop = false;
             // 
@@ -170,7 +170,7 @@
             MinimumSize = new Size(825, 595);
             Name = "Form1";
             StartPosition = FormStartPosition.CenterScreen;
-            Text = "vegeTables";
+            Text = "vegeTables v0.1";
             ((System.ComponentModel.ISupportInitialize)nud_report_section).EndInit();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).EndInit();
             ResumeLayout(false);

@@ -67,19 +67,19 @@ namespace SummaryTableCreator
                     {
                        // Logger.Info("[+] Selected file: " + path);
                         _importer.Import(path);
-                        Logger.Okay("[+] Import completed\n");
+                        Logger.Okay("\n[+] Import completed");
                         lbl_section_start.Enabled = true;
                         nud_report_section.Enabled = true;
                         btn_extract.Enabled = true;
                     }
                     catch (Exception ex)
                     {
-                        Logger.Error("[!] Import failed: " + ex.Message);
+                        Logger.Error("\n[!] Import failed: " + ex.Message);
                     }
                 }
                 else
                 {
-                    Logger.Warning("[!] File selection cancelled.");
+                    Logger.Warning("\n[!] File selection cancelled.");
                 }
             }
         }
