@@ -72,7 +72,7 @@
             // nud_report_section
             // 
             nud_report_section.Font = new Font("Consolas", 12F, FontStyle.Bold);
-            nud_report_section.Location = new Point(192, 175);
+            nud_report_section.Location = new Point(192, 234);
             nud_report_section.Name = "nud_report_section";
             nud_report_section.Size = new Size(41, 26);
             nud_report_section.TabIndex = 3;
@@ -82,7 +82,7 @@
             // btn_extract
             // 
             btn_extract.Font = new Font("Consolas", 12F, FontStyle.Bold);
-            btn_extract.Location = new Point(13, 206);
+            btn_extract.Location = new Point(13, 265);
             btn_extract.Name = "btn_extract";
             btn_extract.Size = new Size(281, 29);
             btn_extract.TabIndex = 4;
@@ -93,7 +93,7 @@
             // btn_generate_table
             // 
             btn_generate_table.Font = new Font("Consolas", 12F, FontStyle.Bold);
-            btn_generate_table.Location = new Point(12, 317);
+            btn_generate_table.Location = new Point(12, 409);
             btn_generate_table.Name = "btn_generate_table";
             btn_generate_table.Size = new Size(282, 60);
             btn_generate_table.TabIndex = 5;
@@ -106,14 +106,14 @@
             lbl_filepath.Font = new Font("Consolas", 9F, FontStyle.Bold);
             lbl_filepath.Location = new Point(12, 112);
             lbl_filepath.Name = "lbl_filepath";
-            lbl_filepath.Size = new Size(282, 56);
+            lbl_filepath.Size = new Size(282, 103);
             lbl_filepath.TabIndex = 6;
             // 
             // cb_cvss
             // 
             cb_cvss.AutoSize = true;
             cb_cvss.Font = new Font("Consolas", 12F, FontStyle.Bold);
-            cb_cvss.Location = new Point(13, 269);
+            cb_cvss.Location = new Point(13, 361);
             cb_cvss.Name = "cb_cvss";
             cb_cvss.Size = new Size(190, 23);
             cb_cvss.TabIndex = 7;
@@ -124,7 +124,7 @@
             // 
             cb_cvss_score.AutoSize = true;
             cb_cvss_score.Font = new Font("Consolas", 12F, FontStyle.Bold);
-            cb_cvss_score.Location = new Point(13, 288);
+            cb_cvss_score.Location = new Point(13, 380);
             cb_cvss_score.Name = "cb_cvss_score";
             cb_cvss_score.Size = new Size(217, 23);
             cb_cvss_score.TabIndex = 8;
@@ -144,7 +144,7 @@
             // lbl_section_start
             // 
             lbl_section_start.Font = new Font("Consolas", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            lbl_section_start.Location = new Point(13, 177);
+            lbl_section_start.Location = new Point(13, 236);
             lbl_section_start.Name = "lbl_section_start";
             lbl_section_start.Size = new Size(182, 26);
             lbl_section_start.TabIndex = 10;
