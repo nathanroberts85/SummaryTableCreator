@@ -1,15 +1,9 @@
 ﻿// File: Reports/IssueSummaryReportGenerator.cs
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Reflection;
-using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Wordprocessing;
 using SummaryTableCreator.Models;
 using SummaryTableCreator.UI;
-using OpenXmlColor = DocumentFormat.OpenXml.Wordprocessing.Color;
 
 namespace SummaryTableCreator.Reports
 {

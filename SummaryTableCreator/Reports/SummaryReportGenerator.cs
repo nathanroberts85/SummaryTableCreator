@@ -1,10 +1,5 @@
 ﻿// File: Reports/SummaryReportGenerator.cs
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Reflection;
-using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Wordprocessing;
 using SummaryTableCreator.Models;
@@ -21,7 +16,7 @@ namespace SummaryTableCreator.Reports
     {
         // Template resource name
         private const string TEMPLATE_RESOURCE_NAME = "SummaryTableCreator.Resources.SummaryTableTemplate.docx";
-        
+
         // Font constants
         private const string FONT_NAME = "Calibri Light";
         private const int FONT_SIZE = 12;
@@ -93,7 +88,7 @@ namespace SummaryTableCreator.Reports
             {
                 throw new InvalidOperationException("Document body not found in template.");
             }
-            
+
             // Find the table in the template (assuming it's the first table)
             var table = body.Descendants<Table>().FirstOrDefault();
             if (table == null)
@@ -115,7 +110,7 @@ namespace SummaryTableCreator.Reports
             // Process each heading result, but only add the first occurrence of each issue
             int rowIndex = 0;
             var processedIssues = new HashSet<string>();
-            
+
             // Check if there's already a blank data row in the template
             var existingRows = table.Elements<TableRow>().ToList();
             bool hasBlankRow = existingRows.Count > 1; // More than just header row
@@ -128,10 +123,10 @@ namespace SummaryTableCreator.Reports
                 {
                     continue;
                 }
-                
+
                 // Mark this issue as processed
                 processedIssues.Add(r.Issue);
-                
+
                 // Map CVSS to rating based on selected rating system
                 var rating = MapRating(r.CvssScore, useSingleLevelCvss);
                 var formattedRating = showCvssScore ? FormatRatingWithScore(rating, r.CvssScore) : rating;
@@ -200,13 +195,13 @@ namespace SummaryTableCreator.Reports
                 // Clear existing content and populate with new data
                 cells[0].RemoveAllChildren<Paragraph>();
                 cells[0].AppendChild(CreateParagraphWithText(issue, rating, true));
-                
+
                 cells[1].RemoveAllChildren<Paragraph>();
                 cells[1].AppendChild(CreateParagraphWithText(criticality, rating, true));
-                
+
                 cells[2].RemoveAllChildren<Paragraph>();
                 cells[2].AppendChild(CreateParagraphWithText(reference, rating, false));
-                
+
                 cells[3].RemoveAllChildren<Paragraph>();
                 cells[3].AppendChild(CreateParagraphWithText(recommendation, rating, false));
             }
@@ -225,7 +220,7 @@ namespace SummaryTableCreator.Reports
                 CreateSimpleCell(reference, rating, false),
                 CreateSimpleCell(recommendation, rating, false)
             );
-            
+
             table.AppendChild(row);
         }
 
@@ -239,33 +234,33 @@ namespace SummaryTableCreator.Reports
             if (text.Contains(","))
             {
                 var paragraph = new Paragraph();
-                
+
                 // Split the text by commas
                 string[] lines = text.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
                     .Select(l => l.Trim())
                     .ToArray();
-                
+
                 // Add each reference with line breaks between them
                 for (int i = 0; i < lines.Length; i++)
                 {
                     var runProps = new RunProperties();
                     runProps.AppendChild(new RunFonts { Ascii = FONT_NAME, HighAnsi = FONT_NAME, ComplexScript = FONT_NAME });
                     runProps.AppendChild(new FontSize { Val = (FONT_SIZE * 2).ToString() });
-                    
+
                     if (isColored)
                     {
                         runProps.AppendChild(new Bold());
                         runProps.AppendChild(new OpenXmlColor { Val = GetColorForRating(rating) });
                     }
-                    
+
                     paragraph.AppendChild(new Run(runProps, new Text(lines[i])));
-                    
+
                     if (i < lines.Length - 1)
                     {
                         paragraph.AppendChild(new Break());
                     }
                 }
-                
+
                 tc.AppendChild(paragraph);
             }
             else
@@ -274,17 +269,17 @@ namespace SummaryTableCreator.Reports
                 var runProps = new RunProperties();
                 runProps.AppendChild(new RunFonts { Ascii = FONT_NAME, HighAnsi = FONT_NAME, ComplexScript = FONT_NAME });
                 runProps.AppendChild(new FontSize { Val = (FONT_SIZE * 2).ToString() });
-                
+
                 if (isColored)
                 {
                     runProps.AppendChild(new Bold());
                     runProps.AppendChild(new OpenXmlColor { Val = GetColorForRating(rating) });
                 }
-                
+
                 paragraph.AppendChild(new Run(runProps, new Text(text)));
                 tc.AppendChild(paragraph);
             }
-            
+
             return tc;
         }
 
@@ -296,33 +291,33 @@ namespace SummaryTableCreator.Reports
             if (text.Contains(","))
             {
                 var paragraph = new Paragraph();
-                
+
                 // Split the text by commas
                 string[] lines = text.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
                     .Select(l => l.Trim())
                     .ToArray();
-                
+
                 // Add each reference with line breaks between them
                 for (int i = 0; i < lines.Length; i++)
                 {
                     var runProps = new RunProperties();
                     runProps.AppendChild(new RunFonts { Ascii = FONT_NAME, HighAnsi = FONT_NAME, ComplexScript = FONT_NAME });
                     runProps.AppendChild(new FontSize { Val = (FONT_SIZE * 2).ToString() });
-                    
+
                     if (isColored)
                     {
                         runProps.AppendChild(new Bold());
                         runProps.AppendChild(new OpenXmlColor { Val = GetColorForRating(rating) });
                     }
-                    
+
                     paragraph.AppendChild(new Run(runProps, new Text(lines[i])));
-                    
+
                     if (i < lines.Length - 1)
                     {
                         paragraph.AppendChild(new Break());
                     }
                 }
-                
+
                 return paragraph;
             }
             else
@@ -331,13 +326,13 @@ namespace SummaryTableCreator.Reports
                 var runProps = new RunProperties();
                 runProps.AppendChild(new RunFonts { Ascii = FONT_NAME, HighAnsi = FONT_NAME, ComplexScript = FONT_NAME });
                 runProps.AppendChild(new FontSize { Val = (FONT_SIZE * 2).ToString() });
-                
+
                 if (isColored)
                 {
                     runProps.AppendChild(new Bold());
                     runProps.AppendChild(new OpenXmlColor { Val = GetColorForRating(rating) });
                 }
-                
+
                 paragraph.AppendChild(new Run(runProps, new Text(text)));
                 return paragraph;
             }

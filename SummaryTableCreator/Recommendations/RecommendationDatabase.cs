@@ -21,13 +21,13 @@ namespace SummaryTableCreator.Recommendations
             // Try exact match first (case-insensitive)
             var exactMatch = _recommendations.Keys
                 .FirstOrDefault(key => string.Equals(key, issueTitle, StringComparison.OrdinalIgnoreCase));
-            
+
             if (exactMatch != null)
                 return _recommendations[exactMatch];
 
             // Try partial matching - find the longest matching key
             var partialMatch = _recommendations.Keys
-                .Where(key => issueTitle.Contains(key, StringComparison.OrdinalIgnoreCase) || 
+                .Where(key => issueTitle.Contains(key, StringComparison.OrdinalIgnoreCase) ||
                              key.Contains(issueTitle, StringComparison.OrdinalIgnoreCase))
                 .OrderByDescending(key => key.Length)
                 .FirstOrDefault();
@@ -38,12 +38,12 @@ namespace SummaryTableCreator.Recommendations
             // Try keyword matching
             var issueWords = issueTitle.ToLower().Split(' ', StringSplitOptions.RemoveEmptyEntries);
             var keywordMatch = _recommendations.Keys
-                .Where(key => 
+                .Where(key =>
                 {
                     var keyWords = key.ToLower().Split(' ', StringSplitOptions.RemoveEmptyEntries);
                     return issueWords.Intersect(keyWords).Count() >= 2; // At least 2 matching words
                 })
-                .OrderByDescending(key => 
+                .OrderByDescending(key =>
                 {
                     var keyWords = key.ToLower().Split(' ', StringSplitOptions.RemoveEmptyEntries);
                     return issueWords.Intersect(keyWords).Count(); // Order by most matching words
@@ -59,13 +59,13 @@ namespace SummaryTableCreator.Recommendations
             {
                 if (!File.Exists(RECOMMENDATIONS_FILE))
                 {
-                   // Logger.Warning($"[!] Recommendations file '{RECOMMENDATIONS_FILE}' not found. Recommendations will be empty.");
+                    // Logger.Warning($"[!] Recommendations file '{RECOMMENDATIONS_FILE}' not found. Recommendations will be empty.");
                     return new Dictionary<string, string>();
                 }
 
                 var json = File.ReadAllText(RECOMMENDATIONS_FILE);
                 var recommendationList = JsonSerializer.Deserialize<List<RecommendationItem>>(json);
-                
+
                 if (recommendationList == null || !recommendationList.Any())
                 {
                     Logger.Warning("[!] Recommendations file is empty or invalid format.");
@@ -73,11 +73,11 @@ namespace SummaryTableCreator.Recommendations
                 }
 
                 var recommendations = recommendationList.ToDictionary(
-                    item => item.ISSUE, 
+                    item => item.ISSUE,
                     item => item.RECOMMENDATION,
                     StringComparer.OrdinalIgnoreCase
                 );
-                
+
                 //Logger.Info($"[+] Loaded {recommendations.Count} recommendations from database");
                 return recommendations;
             }

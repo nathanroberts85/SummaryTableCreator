@@ -1,9 +1,8 @@
 using SummaryTableCreator.Importer;
 using SummaryTableCreator.Models;
 using SummaryTableCreator.Parser;
-using SummaryTableCreator.UI;
 using SummaryTableCreator.Reports;
-using System.IO;
+using SummaryTableCreator.UI;
 
 namespace SummaryTableCreator
 {
@@ -23,7 +22,7 @@ namespace SummaryTableCreator
             cb_cvss.Enabled = false; // Disable CVSS checkbox until extraction
             cb_cvss_score.Enabled = false; // Disable CVSS score checkbox until extraction
             btn_generate_table.Enabled = false;
-            
+
             // Setup tooltips
             SetupTooltips();
         }
@@ -65,7 +64,7 @@ namespace SummaryTableCreator
                     lbl_filepath.Text = path;
                     try
                     {
-                       // Logger.Info("[+] Selected file: " + path);
+                        // Logger.Info("[+] Selected file: " + path);
                         _importer.Import(path);
                         Logger.Okay("\n[+] Import completed");
                         lbl_section_start.Enabled = true;
@@ -135,24 +134,19 @@ namespace SummaryTableCreator
                 // Use template-based generation (assuming simplified rating for now)
                 bool useSingleLevel = cb_cvss.Checked; // You can add a checkbox for this later
                 bool showCvssScore = cb_cvss_score.Checked; // Read from checkbox to show CVSS scores in brackets
-                
+
                 // Generate detailed summary table
                 SummaryReportGenerator.Generate(lbl_filepath.Text, _results, useSingleLevel, showCvssScore);
-                
+
                 // Generate issue summary table
                 IssueSummaryReportGenerator.Generate(lbl_filepath.Text, _results, useSingleLevel);
-                
+
                 //Logger.Okay("[+] Summary table generated successfully using template.");
             }
             catch (Exception ex)
             {
                 Logger.Error("[!] Failed to generate summary table: " + ex.Message);
             }
-        }
-
-        private void cb_cvss_score_CheckedChanged(object sender, EventArgs e)
-        {
-
         }
     }
 }

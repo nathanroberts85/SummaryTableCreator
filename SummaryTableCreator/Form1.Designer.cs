@@ -53,6 +53,7 @@
             rtb_log.ForeColor = Color.SteelBlue;
             rtb_log.Location = new Point(313, 12);
             rtb_log.Name = "rtb_log";
+            rtb_log.ReadOnly = true;
             rtb_log.Size = new Size(484, 532);
             rtb_log.TabIndex = 0;
             rtb_log.Text = "[+] Summary of Findings Table Generator";
@@ -129,7 +130,6 @@
             cb_cvss_score.TabIndex = 8;
             cb_cvss_score.Text = "Show CVSS Score (8.8)";
             cb_cvss_score.UseVisualStyleBackColor = true;
-            cb_cvss_score.CheckedChanged += cb_cvss_score_CheckedChanged;
             // 
             // pictureBox1
             // 
