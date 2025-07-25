@@ -36,8 +36,9 @@ namespace SummaryTableCreator.Parser
         /// </summary>
         /// <param name="filePath">Full path to the .docx file.</param>
         /// <param name="sectionNumber">Top-level section number to target (e.g. 6).</param>
+        /// <param name="includeRecommendations">Whether to fetch recommendations from the database.</param>
         /// <returns>Enumerable of parsed HeadingResult entries.</returns>
-        public IEnumerable<HeadingResult> Parse(string filePath, int sectionNumber)
+        public IEnumerable<HeadingResult> Parse(string filePath, int sectionNumber, bool includeRecommendations = true)
         {
             //Logger.Info($"Parsing document via Open XML: {filePath}");
 
@@ -143,8 +144,10 @@ namespace SummaryTableCreator.Parser
                                 if (next is Table table)
                                     cvss = ExtractCvssFromTable(table);
 
-                                // Get recommendation from database (lazy initialization)
-                                var recommendation = GetRecommendationDatabase().GetRecommendation(issueText);
+                                // Get recommendation from database only if requested
+                                var recommendation = includeRecommendations 
+                                    ? GetRecommendationDatabase().GetRecommendation(issueText)
+                                    : string.Empty;
 
                                 yield return new HeadingResult
                                 {

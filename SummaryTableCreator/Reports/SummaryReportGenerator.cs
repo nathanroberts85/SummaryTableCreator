@@ -37,7 +37,8 @@ namespace SummaryTableCreator.Reports
         /// <param name="results">Parsed heading results.</param>
         /// <param name="useSingleLevelCvss">When true, uses simplified 3-level CVSS rating. When false, uses 5-level rating.</param>
         /// <param name="showCvssScore">When true, shows CVSS score in brackets (e.g., "Critical (10.0)"). When false, shows only the rating (e.g., "Critical").</param>
-        public static void Generate(string originalPath, IEnumerable<HeadingResult> results, bool useSingleLevelCvss = false, bool showCvssScore = false)
+        /// <param name="includeRecommendations">When true, populates recommendations column with data from JSON. When false, recommendations column remains empty.</param>
+        public static void Generate(string originalPath, IEnumerable<HeadingResult> results, bool useSingleLevelCvss = false, bool showCvssScore = false, bool includeRecommendations = true)
         {
             // Determine output path
             var folder = Path.GetDirectoryName(originalPath) ?? string.Empty;
@@ -52,7 +53,7 @@ namespace SummaryTableCreator.Reports
             // Open the template and populate it with data
             using (var doc = WordprocessingDocument.Open(outputPath, true))
             {
-                PopulateTemplate(doc, results, useSingleLevelCvss, showCvssScore);
+                PopulateTemplate(doc, results, useSingleLevelCvss, showCvssScore, includeRecommendations);
             }
 
             Logger.Okay("[+] Summary report generation complete");
@@ -81,7 +82,7 @@ namespace SummaryTableCreator.Reports
         /// <summary>
         /// Populates the template with data.
         /// </summary>
-        private static void PopulateTemplate(WordprocessingDocument doc, IEnumerable<HeadingResult> results, bool useSingleLevelCvss, bool showCvssScore)
+        private static void PopulateTemplate(WordprocessingDocument doc, IEnumerable<HeadingResult> results, bool useSingleLevelCvss, bool showCvssScore, bool includeRecommendations)
         {
             var body = doc.MainDocumentPart?.Document?.Body;
             if (body == null)
@@ -144,16 +145,19 @@ namespace SummaryTableCreator.Reports
 
                 var referenceText = string.Join(",", allReferences);
 
+                // Use recommendation from data if includeRecommendations is true, otherwise use empty string
+                var recommendationText = includeRecommendations ? (r.Recommendation ?? string.Empty) : string.Empty;
+
                 // Use existing blank row for first entry, then create new rows
                 if (hasBlankRow && !usedBlankRow)
                 {
-                    PopulateExistingRow(existingRows[1], r.Issue, formattedRating, referenceText, r.Recommendation ?? string.Empty, rating);
+                    PopulateExistingRow(existingRows[1], r.Issue, formattedRating, referenceText, recommendationText, rating);
                     usedBlankRow = true;
                 }
                 else
                 {
                     // Add new row to table
-                    AddDataRowToTable(table, r.Issue, formattedRating, referenceText, r.Recommendation ?? string.Empty, rating);
+                    AddDataRowToTable(table, r.Issue, formattedRating, referenceText, recommendationText, rating);
                 }
                 rowIndex++;
             }
@@ -190,20 +194,21 @@ namespace SummaryTableCreator.Reports
         private static void PopulateExistingRow(TableRow row, string issue, string criticality, string reference, string recommendation, string rating)
         {
             var cells = row.Elements<TableCell>().ToList();
+
             if (cells.Count >= 4)
             {
                 // Clear existing content and populate with new data
                 cells[0].RemoveAllChildren<Paragraph>();
-                cells[0].AppendChild(CreateParagraphWithText(issue, rating, true));
+                cells[0].AppendChild(CreateParagraphWithText(issue, rating, true, false)); // Issue - no comma splitting
 
                 cells[1].RemoveAllChildren<Paragraph>();
-                cells[1].AppendChild(CreateParagraphWithText(criticality, rating, true));
+                cells[1].AppendChild(CreateParagraphWithText(criticality, rating, true, false)); // Criticality - no comma splitting
 
                 cells[2].RemoveAllChildren<Paragraph>();
-                cells[2].AppendChild(CreateParagraphWithText(reference, rating, false));
+                cells[2].AppendChild(CreateParagraphWithText(reference, rating, false, true)); // Reference - enable comma splitting
 
                 cells[3].RemoveAllChildren<Paragraph>();
-                cells[3].AppendChild(CreateParagraphWithText(recommendation, rating, false));
+                cells[3].AppendChild(CreateParagraphWithText(recommendation, rating, false, false)); // Recommendation - no comma splitting
             }
         }
 
@@ -215,10 +220,10 @@ namespace SummaryTableCreator.Reports
             var row = new TableRow();
 
             row.Append(
-                CreateSimpleCell(issue, rating, true),
-                CreateSimpleCell(criticality, rating, true),
-                CreateSimpleCell(reference, rating, false),
-                CreateSimpleCell(recommendation, rating, false)
+                CreateSimpleCell(issue, rating, true, false), // Issue - no comma splitting
+                CreateSimpleCell(criticality, rating, true, false), // Criticality - no comma splitting
+                CreateSimpleCell(reference, rating, false, true), // Reference - enable comma splitting
+                CreateSimpleCell(recommendation, rating, false, false) // Recommendation - no comma splitting
             );
 
             table.AppendChild(row);
@@ -227,11 +232,11 @@ namespace SummaryTableCreator.Reports
         /// <summary>
         /// Creates a simple cell with only font and color formatting.
         /// </summary>
-        private static TableCell CreateSimpleCell(string text, string rating, bool isColored)
+        private static TableCell CreateSimpleCell(string text, string rating, bool isColored, bool splitOnCommas = false)
         {
             var tc = new TableCell();
 
-            if (text.Contains(","))
+            if (splitOnCommas && text.Contains(","))
             {
                 var paragraph = new Paragraph();
 
@@ -286,9 +291,9 @@ namespace SummaryTableCreator.Reports
         /// <summary>
         /// Creates a paragraph with text and optional coloring.
         /// </summary>
-        private static Paragraph CreateParagraphWithText(string text, string rating, bool isColored)
+        private static Paragraph CreateParagraphWithText(string text, string rating, bool isColored, bool splitOnCommas = false)
         {
-            if (text.Contains(","))
+            if (splitOnCommas && text.Contains(","))
             {
                 var paragraph = new Paragraph();
 

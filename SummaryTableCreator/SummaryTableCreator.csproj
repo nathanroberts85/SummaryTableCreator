@@ -6,10 +6,15 @@
     <Nullable>enable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
+    <ApplicationIcon>veg.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
     <None Remove="Resources\IssueSummaryTableTemplate.docx" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="veg.ico" />
   </ItemGroup>
 
   <ItemGroup>

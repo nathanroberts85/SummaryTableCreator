@@ -21,6 +21,7 @@ namespace SummaryTableCreator
             btn_extract.Enabled = false; // Disable extract button until import
             cb_cvss.Enabled = false; // Disable CVSS checkbox until extraction
             cb_cvss_score.Enabled = false; // Disable CVSS score checkbox until extraction
+            cb_recommendations.Enabled = false; // Disable recommendations checkbox until extraction
             btn_generate_table.Enabled = false;
 
             // Setup tooltips
@@ -41,6 +42,7 @@ namespace SummaryTableCreator
             toolTip1.SetToolTip(btn_extract, "Extract headings and issues from the selected section");
             toolTip1.SetToolTip(cb_cvss, "Commercial format by default, enable to switch to CHECK format");
             toolTip1.SetToolTip(cb_cvss_score, "Show numerical CVSS scores for later report compilation");
+            toolTip1.SetToolTip(cb_recommendations, "Populate the recommendations column with data from the JSON database");
             toolTip1.SetToolTip(btn_generate_table, "Outputs the summary tables in new documents in the same folder");
         }
 
@@ -52,6 +54,7 @@ namespace SummaryTableCreator
             btn_extract.Enabled = false; // Disable extract button until import
             cb_cvss.Enabled = false; // Disable CVSS checkbox until extraction
             cb_cvss_score.Enabled = false; // Disable CVSS score checkbox until extraction
+            cb_recommendations.Enabled = false; // Disable recommendations checkbox until extraction
             btn_generate_table.Enabled = false;
             using (var dlg = new OpenFileDialog())
             {
@@ -91,9 +94,10 @@ namespace SummaryTableCreator
                 // Assuming lbl_filepath holds the selected file path
                 string filePath = lbl_filepath.Text.Trim();
                 int sectionLevel = (int)nud_report_section.Value;
+                bool includeRecommendations = cb_recommendations.Checked;
                 Logger.Info($"[+] Extracting section {sectionLevel} from {filePath}");
 
-                _results = _parser.Parse(filePath, sectionLevel).ToList();
+                _results = _parser.Parse(filePath, sectionLevel, includeRecommendations).ToList();
                 // Count phases and issues separately
                 var phases = _results.Where(r => r.IsPhaseHeader).Count();
                 var issues = _results.Where(r => !r.IsPhaseHeader).Count();
@@ -107,6 +111,7 @@ namespace SummaryTableCreator
                 btn_generate_table.Enabled = _results.Any();
                 cb_cvss.Enabled = true; // Enable CVSS checkbox
                 cb_cvss_score.Enabled = true; // Enable CVSS score checkbox
+                cb_recommendations.Enabled = true; // Enable recommendations checkbox
             }
             catch (Exception ex)
             {
@@ -134,9 +139,10 @@ namespace SummaryTableCreator
                 // Use template-based generation (assuming simplified rating for now)
                 bool useSingleLevel = cb_cvss.Checked; // You can add a checkbox for this later
                 bool showCvssScore = cb_cvss_score.Checked; // Read from checkbox to show CVSS scores in brackets
+                bool includeRecommendations = cb_recommendations.Checked; // Read from checkbox to include recommendations
 
                 // Generate detailed summary table
-                SummaryReportGenerator.Generate(lbl_filepath.Text, _results, useSingleLevel, showCvssScore);
+                SummaryReportGenerator.Generate(lbl_filepath.Text, _results, useSingleLevel, showCvssScore, includeRecommendations);
 
                 // Generate issue summary table
                 IssueSummaryReportGenerator.Generate(lbl_filepath.Text, _results, useSingleLevel);

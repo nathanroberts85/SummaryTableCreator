@@ -29,6 +29,7 @@
         private void InitializeComponent()
         {
             components = new System.ComponentModel.Container();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
             rtb_log = new RichTextBox();
             btn_import = new Button();
             nud_report_section = new NumericUpDown();
@@ -40,6 +41,7 @@
             pictureBox1 = new PictureBox();
             lbl_section_start = new Label();
             toolTip1 = new ToolTip(components);
+            cb_recommendations = new CheckBox();
             ((System.ComponentModel.ISupportInitialize)nud_report_section).BeginInit();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
             SuspendLayout();
@@ -113,7 +115,7 @@
             // 
             cb_cvss.AutoSize = true;
             cb_cvss.Font = new Font("Consolas", 12F, FontStyle.Bold);
-            cb_cvss.Location = new Point(13, 361);
+            cb_cvss.Location = new Point(12, 344);
             cb_cvss.Name = "cb_cvss";
             cb_cvss.Size = new Size(190, 23);
             cb_cvss.TabIndex = 7;
@@ -124,7 +126,7 @@
             // 
             cb_cvss_score.AutoSize = true;
             cb_cvss_score.Font = new Font("Consolas", 12F, FontStyle.Bold);
-            cb_cvss_score.Location = new Point(13, 380);
+            cb_cvss_score.Location = new Point(12, 363);
             cb_cvss_score.Name = "cb_cvss_score";
             cb_cvss_score.Size = new Size(217, 23);
             cb_cvss_score.TabIndex = 8;
@@ -150,12 +152,26 @@
             lbl_section_start.TabIndex = 10;
             lbl_section_start.Text = "Start From Section:";
             // 
+            // cb_recommendations
+            // 
+            cb_recommendations.AutoSize = true;
+            cb_recommendations.Checked = true;
+            cb_recommendations.CheckState = CheckState.Checked;
+            cb_recommendations.Font = new Font("Consolas", 12F, FontStyle.Bold);
+            cb_recommendations.Location = new Point(12, 382);
+            cb_recommendations.Name = "cb_recommendations";
+            cb_recommendations.Size = new Size(244, 23);
+            cb_recommendations.TabIndex = 11;
+            cb_recommendations.Text = "Populate Recommendations";
+            cb_recommendations.UseVisualStyleBackColor = true;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = SystemColors.GradientActiveCaption;
             ClientSize = new Size(809, 556);
+            Controls.Add(cb_recommendations);
             Controls.Add(lbl_section_start);
             Controls.Add(cb_cvss_score);
             Controls.Add(cb_cvss);
@@ -166,6 +182,7 @@
             Controls.Add(btn_import);
             Controls.Add(rtb_log);
             Controls.Add(pictureBox1);
+            Icon = (Icon)resources.GetObject("$this.Icon");
             MaximizeBox = false;
             MinimumSize = new Size(825, 595);
             Name = "Form1";
@@ -190,5 +207,6 @@
         private PictureBox pictureBox1;
         private Label lbl_section_start;
         private ToolTip toolTip1;
+        private CheckBox cb_recommendations;
     }
 }
