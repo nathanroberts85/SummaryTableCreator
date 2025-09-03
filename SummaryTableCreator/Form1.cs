@@ -21,6 +21,7 @@ namespace SummaryTableCreator
             btn_extract.Enabled = false; // Disable extract button until import
             cb_cvss.Enabled = false; // Disable CVSS checkbox until extraction
             cb_cvss_score.Enabled = false; // Disable CVSS score checkbox until extraction
+            cb_interim_excel.Enabled = false; // Disabled interim Excel checkbox by default
             cb_recommendations.Enabled = false; // Disable recommendations checkbox until extraction
             btn_generate_table.Enabled = false;
 
@@ -54,6 +55,7 @@ namespace SummaryTableCreator
             btn_extract.Enabled = false; // Disable extract button until import
             cb_cvss.Enabled = false; // Disable CVSS checkbox until extraction
             cb_cvss_score.Enabled = false; // Disable CVSS score checkbox until extraction
+            cb_interim_excel.Enabled = false; // Disabled interim Excel checkbox by default
             cb_recommendations.Enabled = false; // Disable recommendations checkbox until extraction
             btn_generate_table.Enabled = false;
             using (var dlg = new OpenFileDialog())
@@ -111,6 +113,7 @@ namespace SummaryTableCreator
                 btn_generate_table.Enabled = _results.Any();
                 cb_cvss.Enabled = true; // Enable CVSS checkbox
                 cb_cvss_score.Enabled = true; // Enable CVSS score checkbox
+                cb_interim_excel.Enabled = true; // Enable interim Excel checkbox by default
                 cb_recommendations.Enabled = true; // Enable recommendations checkbox
             }
             catch (Exception ex)
@@ -136,22 +139,26 @@ namespace SummaryTableCreator
 
             try
             {
-                // Use template-based generation (assuming simplified rating for now)
-                bool useSingleLevel = cb_cvss.Checked; // You can add a checkbox for this later
-                bool showCvssScore = cb_cvss_score.Checked; // Read from checkbox to show CVSS scores in brackets
-                bool includeRecommendations = cb_recommendations.Checked; // Read from checkbox to include recommendations
+                bool useSingleLevel = cb_cvss.Checked;
+                bool showCvssScore = cb_cvss_score.Checked;
+                bool includeRecommendations = cb_recommendations.Checked;
+                bool generateExcel = cb_interim_excel.Checked; // New checkbox
 
-                // Generate detailed summary table
-                SummaryReportGenerator.Generate(lbl_filepath.Text, _results, useSingleLevel, showCvssScore, includeRecommendations);
-
-                // Generate issue summary table
-                IssueSummaryReportGenerator.Generate(lbl_filepath.Text, _results, useSingleLevel);
-
-                //Logger.Okay("[+] Summary table generated successfully using template.");
+                if (generateExcel)
+                {
+                    // Generate Excel report
+                    ExcelReportGenerator.Generate(lbl_filepath.Text, _results, useSingleLevel, showCvssScore, includeRecommendations);
+                }
+                else
+                {
+                    // Generate Word reports (existing logic)
+                    SummaryReportGenerator.Generate(lbl_filepath.Text, _results, useSingleLevel, showCvssScore, includeRecommendations);
+                    IssueSummaryReportGenerator.Generate(lbl_filepath.Text, _results, useSingleLevel);
+                }
             }
             catch (Exception ex)
             {
-                Logger.Error("[!] Failed to generate summary table: " + ex.Message);
+                Logger.Error("[!] Failed to generate report: " + ex.Message);
             }
         }
     }

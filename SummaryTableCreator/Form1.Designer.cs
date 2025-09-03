@@ -42,6 +42,7 @@
             lbl_section_start = new Label();
             toolTip1 = new ToolTip(components);
             cb_recommendations = new CheckBox();
+            cb_interim_excel = new CheckBox();
             ((System.ComponentModel.ISupportInitialize)nud_report_section).BeginInit();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
             SuspendLayout();
@@ -95,7 +96,7 @@
             // btn_generate_table
             // 
             btn_generate_table.Font = new Font("Consolas", 12F, FontStyle.Bold);
-            btn_generate_table.Location = new Point(12, 409);
+            btn_generate_table.Location = new Point(13, 435);
             btn_generate_table.Name = "btn_generate_table";
             btn_generate_table.Size = new Size(282, 60);
             btn_generate_table.TabIndex = 5;
@@ -115,7 +116,7 @@
             // 
             cb_cvss.AutoSize = true;
             cb_cvss.Font = new Font("Consolas", 12F, FontStyle.Bold);
-            cb_cvss.Location = new Point(12, 344);
+            cb_cvss.Location = new Point(12, 340);
             cb_cvss.Name = "cb_cvss";
             cb_cvss.Size = new Size(190, 23);
             cb_cvss.TabIndex = 7;
@@ -158,12 +159,23 @@
             cb_recommendations.Checked = true;
             cb_recommendations.CheckState = CheckState.Checked;
             cb_recommendations.Font = new Font("Consolas", 12F, FontStyle.Bold);
-            cb_recommendations.Location = new Point(12, 382);
+            cb_recommendations.Location = new Point(12, 409);
             cb_recommendations.Name = "cb_recommendations";
             cb_recommendations.Size = new Size(244, 23);
             cb_recommendations.TabIndex = 11;
             cb_recommendations.Text = "Populate Recommendations";
             cb_recommendations.UseVisualStyleBackColor = true;
+            // 
+            // cb_interim_excel
+            // 
+            cb_interim_excel.AutoSize = true;
+            cb_interim_excel.Font = new Font("Consolas", 12F, FontStyle.Bold);
+            cb_interim_excel.Location = new Point(12, 386);
+            cb_interim_excel.Name = "cb_interim_excel";
+            cb_interim_excel.Size = new Size(145, 23);
+            cb_interim_excel.TabIndex = 12;
+            cb_interim_excel.Text = "Interim Excel";
+            cb_interim_excel.UseVisualStyleBackColor = true;
             // 
             // Form1
             // 
@@ -171,6 +183,7 @@
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = SystemColors.GradientActiveCaption;
             ClientSize = new Size(809, 556);
+            Controls.Add(cb_interim_excel);
             Controls.Add(cb_recommendations);
             Controls.Add(lbl_section_start);
             Controls.Add(cb_cvss_score);
@@ -208,5 +221,6 @@
         private Label lbl_section_start;
         private ToolTip toolTip1;
         private CheckBox cb_recommendations;
+        private CheckBox cb_interim_excel;
     }
 }
