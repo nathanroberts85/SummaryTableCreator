@@ -145,7 +145,7 @@ namespace SummaryTableCreator.Reports
                 if (cvss >= 7.0) return "High";
                 if (cvss >= 4.0) return "Medium";
                 if (cvss >= 1.0) return "Low";
-                return "Info";
+                return "Informational";
             }
             else
             {
@@ -153,7 +153,7 @@ namespace SummaryTableCreator.Reports
                 if (cvss >= 7.0) return "High";
                 if (cvss >= 4.0) return "Medium";
                 if (cvss >= 1.0) return "Low";
-                return "Info";
+                return "Informational";
             }
         }
 
