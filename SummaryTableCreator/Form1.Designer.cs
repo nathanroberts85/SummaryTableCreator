@@ -200,7 +200,7 @@
             MinimumSize = new Size(825, 595);
             Name = "Form1";
             StartPosition = FormStartPosition.CenterScreen;
-            Text = "vegeTables v0.1";
+            Text = "vegeTables v0.2";
             ((System.ComponentModel.ISupportInitialize)nud_report_section).EndInit();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).EndInit();
             ResumeLayout(false);

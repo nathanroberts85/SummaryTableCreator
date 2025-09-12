@@ -133,7 +133,8 @@ namespace SummaryTableCreator.Parser
                             {
                                 issueCounter++;
                                 var reference = $"{sectionNumber}.{phaseCounter}.{issueCounter}";
-                                var issueText = text.Split(new[] { ',' }, 2)[0].Trim();
+                                //var issueText = text.Split(new[] { ',' }, 2)[0].Trim();
+                                var issueText = text.Trim();
                                 Logger.Okay($"{reference}: {issueText}");
 
                                 // Locate next table for CVSS

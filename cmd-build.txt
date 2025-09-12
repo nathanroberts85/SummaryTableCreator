@@ -1,0 +1,1 @@
+dotnet publish -c Release -r win-x64 --self-contained true /p:PublishSingleFile=true -o "C:\Users\natha\source\repos\SummaryTableCreator\SummaryTableCreator\bin\Release\net8.0-windows\publish\win-x64"
