@@ -45,6 +45,7 @@ namespace SummaryTableCreator
             toolTip1.SetToolTip(cb_cvss_score, "Show numerical CVSS scores for later report compilation");
             toolTip1.SetToolTip(cb_recommendations, "Populate the recommendations column with data from the JSON database");
             toolTip1.SetToolTip(btn_generate_table, "Outputs the summary tables in new documents in the same folder");
+            toolTip1.SetToolTip(cb_interim_excel, "Outputs the summary table in Excel format with phases split on sheets");
         }
 
         private void btn_import_Click(object sender, EventArgs e)
