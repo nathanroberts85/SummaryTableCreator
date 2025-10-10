@@ -75,7 +75,7 @@
             // nud_report_section
             // 
             nud_report_section.Font = new Font("Consolas", 12F, FontStyle.Bold);
-            nud_report_section.Location = new Point(192, 234);
+            nud_report_section.Location = new Point(240, 234);
             nud_report_section.Name = "nud_report_section";
             nud_report_section.Size = new Size(41, 26);
             nud_report_section.TabIndex = 3;
@@ -149,7 +149,7 @@
             lbl_section_start.Font = new Font("Consolas", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
             lbl_section_start.Location = new Point(13, 236);
             lbl_section_start.Name = "lbl_section_start";
-            lbl_section_start.Size = new Size(182, 26);
+            lbl_section_start.Size = new Size(221, 26);
             lbl_section_start.TabIndex = 10;
             lbl_section_start.Text = "Start From Section:";
             // 
