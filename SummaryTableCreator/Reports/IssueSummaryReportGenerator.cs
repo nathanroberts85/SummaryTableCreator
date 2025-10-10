@@ -91,8 +91,11 @@ namespace SummaryTableCreator.Reports
                 RemoveCriticalColumn(table);
             }
 
-            // Get phases and issues
-            var phases = results.Where(r => r.IsPhaseHeader).OrderBy(r => r.Reference).ToList();
+            // Get phases and issues - sort phases numerically by reference
+            var phases = results.Where(r => r.IsPhaseHeader)
+                .OrderBy(r => int.TryParse(r.Reference, out var num) ? num : int.MaxValue)
+                .ToList();
+            //var phases = results.Where(r => r.IsPhaseHeader).OrderBy(r => r.Reference).ToList();
             var issues = results.Where(r => !r.IsPhaseHeader).ToList();
 
             // Calculate summary statistics
@@ -160,7 +163,7 @@ namespace SummaryTableCreator.Reports
                     stats["High"] = phaseIssues.Count(i => MapRating(i.CvssScore, true) == "High");
                     stats["Medium"] = phaseIssues.Count(i => MapRating(i.CvssScore, true) == "Medium");
                     stats["Low"] = phaseIssues.Count(i => MapRating(i.CvssScore, true) == "Low");
-                    stats["Info"] = phaseIssues.Count(i => MapRating(i.CvssScore, true) == "INFORMATIONAL");
+                    stats["Info"] = phaseIssues.Count(i => MapRating(i.CvssScore, true) == "INFO");
                 }
                 else
                 {
@@ -213,81 +216,94 @@ namespace SummaryTableCreator.Reports
         {
             var cells = row.Elements<TableCell>().ToList();
             int cellIndex = 0;
+            bool isTotalsRow = description.Equals("Total", StringComparison.OrdinalIgnoreCase);
 
-            // Description
+            // Description cell — only bold for totals row
             if (cells.Count > cellIndex)
             {
-                cells[cellIndex].RemoveAllChildren<Paragraph>();
-                cells[cellIndex].AppendChild(CreateParagraphWithText(description));
+                cells[cellIndex].RemoveAllChildren();
+                cells[cellIndex].AppendChild(CreateParagraphWithText(description, isTotalsRow));
                 cellIndex++;
             }
 
             if (!useSingleLevelCvss)
             {
-                // Critical column (only if not using single level)
+                // Critical column — only bold for totals row
                 if (cells.Count > cellIndex)
                 {
-                    cells[cellIndex].RemoveAllChildren<Paragraph>();
-                    cells[cellIndex].AppendChild(CreateParagraphWithText(stats["Critical"].ToString()));
+                    cells[cellIndex].RemoveAllChildren();
+                    cells[cellIndex].AppendChild(CreateParagraphWithText(stats["Critical"].ToString(), isTotalsRow));
                     cellIndex++;
                 }
             }
 
-            // High, Medium, Low, Info, Total
-            var columns = useSingleLevelCvss ?
-                new[] { "High", "Medium", "Low", "Info", "Total" } :
-                new[] { "High", "Medium", "Low", "Info", "Total" };
+            var columns = useSingleLevelCvss
+                ? new[] { "High", "Medium", "Low", "Info", "Total" }
+                : new[] { "High", "Medium", "Low", "Info", "Total" };
 
-            foreach (var column in columns)
+            for (int i = 0; i < columns.Length; i++)
             {
                 if (cells.Count > cellIndex)
                 {
-                    cells[cellIndex].RemoveAllChildren<Paragraph>();
-                    cells[cellIndex].AppendChild(CreateParagraphWithText(stats[column].ToString()));
+                    bool isTotalColumn = (i == columns.Length - 1);
+                    bool bold = isTotalsRow || isTotalColumn;
+                    cells[cellIndex].RemoveAllChildren();
+                    cells[cellIndex].AppendChild(CreateParagraphWithText(stats[columns[i]].ToString(), bold));
                     cellIndex++;
                 }
             }
         }
+
+
 
         /// <summary>
         /// Adds a data row to the table.
         /// </summary>
         private static void AddDataRowToTable(Table table, string description, Dictionary<string, int> stats, bool useSingleLevelCvss)
         {
+            bool isTotalsRow = description.Equals("Total", StringComparison.OrdinalIgnoreCase);
             var row = new TableRow();
 
-            // Description
-            row.AppendChild(CreateSimpleCell(description));
+            // Description cell — only bold if it's the Total row
+            row.AppendChild(CreateSimpleCell(description, isTotalsRow));
 
             if (!useSingleLevelCvss)
             {
-                // Critical column (only if not using single level)
-                row.AppendChild(CreateSimpleCell(stats["Critical"].ToString()));
+                // Critical column — bold only for totals row
+                row.AppendChild(CreateSimpleCell(stats["Critical"].ToString(), isTotalsRow));
             }
 
-            // High, Medium, Low, Info, Total
-            var columns = useSingleLevelCvss ?
-                new[] { "High", "Medium", "Low", "Info", "Total" } :
-                new[] { "High", "Medium", "Low", "Info", "Total" };
+            // Severity columns
+            var columns = useSingleLevelCvss
+                ? new[] { "High", "Medium", "Low", "Info", "Total" }
+                : new[] { "High", "Medium", "Low", "Info", "Total" };
 
-            foreach (var column in columns)
+            for (int i = 0; i < columns.Length; i++)
             {
-                row.AppendChild(CreateSimpleCell(stats[column].ToString()));
+                bool isTotalColumn = (i == columns.Length - 1);
+                // Bold if totals row or if total column
+                bool bold = isTotalsRow || isTotalColumn;
+                row.AppendChild(CreateSimpleCell(stats[columns[i]].ToString(), bold));
             }
 
             table.AppendChild(row);
         }
 
+
         /// <summary>
         /// Creates a simple cell with standard formatting.
         /// </summary>
-        private static TableCell CreateSimpleCell(string text)
+        private static TableCell CreateSimpleCell(string text, bool bold = false)
         {
             var tc = new TableCell();
             var paragraph = new Paragraph();
             var runProps = new RunProperties();
             runProps.AppendChild(new RunFonts { Ascii = FONT_NAME, HighAnsi = FONT_NAME, ComplexScript = FONT_NAME });
             runProps.AppendChild(new FontSize { Val = (FONT_SIZE * 2).ToString() });
+            if (bold)
+                runProps.AppendChild(new Bold());
+            else
+                runProps.AppendChild(new Bold() { Val = false });
 
             paragraph.AppendChild(new Run(runProps, new Text(text)));
             tc.AppendChild(paragraph);
@@ -297,12 +313,16 @@ namespace SummaryTableCreator.Reports
         /// <summary>
         /// Creates a paragraph with text and standard formatting.
         /// </summary>
-        private static Paragraph CreateParagraphWithText(string text)
+        private static Paragraph CreateParagraphWithText(string text, bool bold = false)
         {
             var paragraph = new Paragraph();
             var runProps = new RunProperties();
             runProps.AppendChild(new RunFonts { Ascii = FONT_NAME, HighAnsi = FONT_NAME, ComplexScript = FONT_NAME });
             runProps.AppendChild(new FontSize { Val = (FONT_SIZE * 2).ToString() });
+            if (bold)
+                runProps.AppendChild(new Bold());
+            else
+                runProps.AppendChild(new Bold() { Val = false });
 
             paragraph.AppendChild(new Run(runProps, new Text(text)));
             return paragraph;
@@ -321,7 +341,7 @@ namespace SummaryTableCreator.Reports
                 if (cvss >= 7.0) return "High";
                 if (cvss >= 4.0) return "Medium";
                 if (cvss >= 1.0) return "Low";
-                return "INFORMATIONAL";
+                return "INFO";
             }
             else
             {
@@ -330,7 +350,7 @@ namespace SummaryTableCreator.Reports
                 if (cvss >= 7.0) return "High";
                 if (cvss >= 4.0) return "Medium";
                 if (cvss >= 1.0) return "Low";
-                return "INFORMATIONAL";
+                return "INFO";
             }
         }
     }
