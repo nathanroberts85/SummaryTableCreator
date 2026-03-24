@@ -37,12 +37,12 @@
             btn_generate_table = new Button();
             lbl_filepath = new Label();
             cb_cvss = new CheckBox();
-            cb_cvss_score = new CheckBox();
             pictureBox1 = new PictureBox();
             lbl_section_start = new Label();
             toolTip1 = new ToolTip(components);
             cb_recommendations = new CheckBox();
             cb_interim_excel = new CheckBox();
+            cb_cvss_score = new CheckBox();
             ((System.ComponentModel.ISupportInitialize)nud_report_section).BeginInit();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
             SuspendLayout();
@@ -123,17 +123,6 @@
             cb_cvss.Text = "CHECK CVSS Scoring";
             cb_cvss.UseVisualStyleBackColor = true;
             // 
-            // cb_cvss_score
-            // 
-            cb_cvss_score.AutoSize = true;
-            cb_cvss_score.Font = new Font("Consolas", 12F, FontStyle.Bold);
-            cb_cvss_score.Location = new Point(12, 363);
-            cb_cvss_score.Name = "cb_cvss_score";
-            cb_cvss_score.Size = new Size(217, 23);
-            cb_cvss_score.TabIndex = 8;
-            cb_cvss_score.Text = "Show CVSS Score (8.8)";
-            cb_cvss_score.UseVisualStyleBackColor = true;
-            // 
             // pictureBox1
             // 
             pictureBox1.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
@@ -177,6 +166,17 @@
             cb_interim_excel.Text = "Interim Excel";
             cb_interim_excel.UseVisualStyleBackColor = true;
             // 
+            // cb_cvss_score
+            // 
+            cb_cvss_score.AutoSize = true;
+            cb_cvss_score.Font = new Font("Consolas", 12F, FontStyle.Bold);
+            cb_cvss_score.Location = new Point(12, 363);
+            cb_cvss_score.Name = "cb_cvss_score";
+            cb_cvss_score.Size = new Size(217, 23);
+            cb_cvss_score.TabIndex = 8;
+            cb_cvss_score.Text = "Show CVSS Score (8.8)";
+            cb_cvss_score.UseVisualStyleBackColor = true;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -216,11 +216,11 @@
         private Button btn_generate_table;
         private Label lbl_filepath;
         private CheckBox cb_cvss;
-        private CheckBox cb_cvss_score;
         private PictureBox pictureBox1;
         private Label lbl_section_start;
         private ToolTip toolTip1;
         private CheckBox cb_recommendations;
         private CheckBox cb_interim_excel;
+        private CheckBox cb_cvss_score;
     }
 }
