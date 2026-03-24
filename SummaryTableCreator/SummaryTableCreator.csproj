@@ -10,6 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Reports\Summary_of_Findings.docx" />
     <None Remove="Resources\IssueSummaryTableTemplate.docx" />
   </ItemGroup>
 
@@ -22,6 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="Resources\Summary_of_Findings.docx" />
     <EmbeddedResource Include="Resources\IssueSummaryTableTemplate.docx" />
     <EmbeddedResource Include="Resources\SummaryTableTemplate.docx" />
   </ItemGroup>

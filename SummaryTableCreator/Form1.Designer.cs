@@ -161,9 +161,9 @@
             cb_recommendations.Font = new Font("Consolas", 12F, FontStyle.Bold);
             cb_recommendations.Location = new Point(12, 409);
             cb_recommendations.Name = "cb_recommendations";
-            cb_recommendations.Size = new Size(244, 23);
+            cb_recommendations.Size = new Size(217, 23);
             cb_recommendations.TabIndex = 11;
-            cb_recommendations.Text = "Populate Recommendations";
+            cb_recommendations.Text = "Populate Descriptions";
             cb_recommendations.UseVisualStyleBackColor = true;
             // 
             // cb_interim_excel

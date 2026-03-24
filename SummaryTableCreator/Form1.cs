@@ -43,7 +43,7 @@ namespace SummaryTableCreator
             toolTip1.SetToolTip(btn_extract, "Extract headings and issues from the selected section");
             toolTip1.SetToolTip(cb_cvss, "Commercial format by default, enable to switch to CHECK format");
             toolTip1.SetToolTip(cb_cvss_score, "Show numerical CVSS scores for later report compilation");
-            toolTip1.SetToolTip(cb_recommendations, "Populate the recommendations column with data from the JSON database");
+            toolTip1.SetToolTip(cb_recommendations, "Populate the Issue Descriptions column with data from the JSON database");
             toolTip1.SetToolTip(btn_generate_table, "Outputs the summary tables in new documents in the same folder");
             toolTip1.SetToolTip(cb_interim_excel, "Outputs the summary table in Excel format with phases split on sheets");
         }
@@ -140,26 +140,27 @@ namespace SummaryTableCreator
 
             try
             {
-                bool useSingleLevel = cb_cvss.Checked;
-                bool showCvssScore = cb_cvss_score.Checked;
-                bool includeRecommendations = cb_recommendations.Checked;
-                bool generateExcel = cb_interim_excel.Checked; // New checkbox
+                bool generateExcel = cb_interim_excel.Checked;
 
                 if (generateExcel)
                 {
-                    // Generate Excel report
+                    // Generate Excel report (keep for now)
+                    bool useSingleLevel = cb_cvss.Checked;
+                    bool showCvssScore = cb_cvss_score.Checked;
+                    bool includeRecommendations = cb_recommendations.Checked;
                     ExcelReportGenerator.Generate(lbl_filepath.Text, _results, useSingleLevel, showCvssScore, includeRecommendations);
                 }
                 else
                 {
-                    // Generate Word reports (existing logic)
-                    SummaryReportGenerator.Generate(lbl_filepath.Text, _results, useSingleLevel, showCvssScore, includeRecommendations);
-                    IssueSummaryReportGenerator.Generate(lbl_filepath.Text, _results, useSingleLevel);
+                    // Generate new consolidated Word report
+                    FindingsSummaryReportGenerator.Generate(lbl_filepath.Text, _results);
                 }
             }
             catch (Exception ex)
             {
                 Logger.Error("[!] Failed to generate report: " + ex.Message);
+                // Log stack trace for debugging
+                Logger.Error($"[!] Stack trace: {ex.StackTrace}");
             }
         }
     }

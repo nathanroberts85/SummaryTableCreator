@@ -13,7 +13,7 @@ namespace SummaryTableCreator.Reports
     public static class IssueSummaryReportGenerator
     {
         // Template resource name
-        private const string TEMPLATE_RESOURCE_NAME = "SummaryTableCreator.Resources.IssueSummaryTableTemplate.docx";
+        private const string TEMPLATE_RESOURCE_NAME = "SummaryTableCreator.Summary_of_Findings.docx";
 
         // Font constants
         private const string FONT_NAME = "Calibri Light";

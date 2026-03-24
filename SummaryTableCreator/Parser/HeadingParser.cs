@@ -5,12 +5,13 @@ using DocumentFormat.OpenXml.Wordprocessing;
 using SummaryTableCreator.Models;
 using SummaryTableCreator.Recommendations;
 using SummaryTableCreator.UI;
+using System.Text.RegularExpressions;
 
 namespace SummaryTableCreator.Parser
 {
     /// <summary>
-    /// Parses a Word document by simulating the document flow: detecting Heading1, Heading2, and Heading3
-    /// and generating references dynamically based on the user-provided top-level section number.
+    /// Parses a Word document by detecting Heading1 (sections), Heading2 (phases), 
+    /// Heading3 (severity), and Heading4 (findings).
     /// </summary>
     public class HeadingParser
     {
@@ -31,8 +32,8 @@ namespace SummaryTableCreator.Parser
         }
 
         /// <summary>
-        /// Parses the document for issues under the specified section number, incrementing phase and issue counters
-        /// according to Heading2 and Heading3 styles, and extracts CVSS scores from the following table.
+        /// Parses the document for findings under the specified section number.
+        /// New format: Heading2 = Phase, Heading3 = Severity, Heading4 = Finding
         /// </summary>
         /// <param name="filePath">Full path to the .docx file.</param>
         /// <param name="sectionNumber">Top-level section number to target (e.g. 6).</param>
@@ -40,8 +41,6 @@ namespace SummaryTableCreator.Parser
         /// <returns>Enumerable of parsed HeadingResult entries.</returns>
         public IEnumerable<HeadingResult> Parse(string filePath, int sectionNumber, bool includeRecommendations = true)
         {
-            //Logger.Info($"Parsing document via Open XML: {filePath}");
-
             string actualFilePath = filePath;
             string? tempFilePath = null;
 
@@ -66,18 +65,22 @@ namespace SummaryTableCreator.Parser
             {
                 using var doc = WordprocessingDocument.Open(actualFilePath, false);
                 var body = doc.MainDocumentPart.Document.Body;
-                var elements = body.Elements<OpenXmlElement>()
-                    .Where(e => e is Paragraph || e is Table)
-                    .ToList();
+                
+                // Get all elements, including those inside content controls
+                var allElements = GetAllElements(body).ToList();
 
                 bool insideSection = false;
-                int phaseCounter = 0;
-                int issueCounter = 0;
                 int heading1Count = 0;
+                int phaseCounter = 0;
+                int severityCounter = 0;
+                int findingCounter = 0;
+                
+                string currentPhase = string.Empty;
+                string currentSeverity = string.Empty;
 
-                foreach (var el in elements)
+                foreach (var item in allElements)
                 {
-                    if (el is Paragraph para)
+                    if (item.Element is Paragraph para)
                     {
                         var style = para.ParagraphProperties?.ParagraphStyleId?.Val?.Value;
                         var text = para.InnerText?.Trim() ?? string.Empty;
@@ -85,8 +88,8 @@ namespace SummaryTableCreator.Parser
 
                         // Count Heading1 occurrences to detect section by index
                         if ((string.Equals(style, "Heading1", StringComparison.OrdinalIgnoreCase) ||
-                            outlineLevel == 0) && // Outline level is 0-indexed, so level 1 = value 0
-                            !string.IsNullOrWhiteSpace(text)) // Skip empty headings
+                            outlineLevel == 0) &&
+                            !string.IsNullOrWhiteSpace(text))
                         {
                             heading1Count++;
                             if (!insideSection && heading1Count == sectionNumber)
@@ -104,60 +107,59 @@ namespace SummaryTableCreator.Parser
 
                         if (insideSection)
                         {
-                            // New phase (Heading2 or outline level 2)
-                            if ((string.Equals(style, "Heading2", StringComparison.OrdinalIgnoreCase) ||
-                                outlineLevel == 1) && // Outline level is 0-indexed, so level 2 = value 1
-                                !string.IsNullOrWhiteSpace(text)) // Skip empty headings
+                            // Determine heading level by style first, then fall back to text analysis
+                            var headingLevel = DetermineHeadingLevel(style, outlineLevel, text, sectionNumber);
+
+                            if (headingLevel == 4) // Heading4 (Finding)
+                            {
+                                findingCounter++;
+                                var findingTitle = CleanHeadingText(text, sectionNumber, 4);
+                                var reference = $"{sectionNumber}.{phaseCounter}.{severityCounter}.{findingCounter}";
+                                
+                                Logger.Okay($"    {reference}: {findingTitle}");
+
+                                string issueDescription = ExtractIssueDescription(item.Parent ?? para);
+
+                                yield return new HeadingResult
+                                {
+                                    Issue = findingTitle,
+                                    Reference = reference,
+                                    IsPhaseHeader = false,
+                                    PhaseName = currentPhase,
+                                    Severity = currentSeverity,
+                                    Title = findingTitle,
+                                    IssueDescription = issueDescription,
+                                    CvssScore = null,
+                                    Recommendation = string.Empty
+                                };
+                            }
+                            else if (headingLevel == 3) // Heading3 (Severity)
+                            {
+                                severityCounter++;
+                                findingCounter = 0;
+                                currentSeverity = CleanHeadingText(text, sectionNumber, 3);
+
+                                Logger.Info($"\n  [+] Severity: {currentSeverity}");
+                            }
+                            else if (headingLevel == 2) // Heading2 (Phase)
                             {
                                 phaseCounter++;
-                                issueCounter = 0;
+                                severityCounter = 0;
+                                findingCounter = 0;
+                                currentPhase = CleanHeadingText(text, sectionNumber, 2);
 
-                                // Capture Heading2 data for summary table
                                 yield return new HeadingResult
                                 {
-                                    Issue = text.Trim(),
+                                    Issue = currentPhase,
                                     Reference = $"{sectionNumber}.{phaseCounter}",
-                                    CvssScore = null,
-                                    Recommendation = string.Empty,
-                                    IsPhaseHeader = true
+                                    IsPhaseHeader = true,
+                                    PhaseName = currentPhase,
+                                    Title = currentPhase,
+                                    Severity = string.Empty,
+                                    IssueDescription = string.Empty
                                 };
 
-                                Logger.Info($"\n[+] Phase {phaseCounter}");
-                                continue;
-                            }
-
-                            // New issue (Heading3 or outline level 3)
-                            if ((string.Equals(style, "Heading3", StringComparison.OrdinalIgnoreCase) ||
-                                outlineLevel == 2) && // Outline level is 0-indexed, so level 3 = value 2
-                                !string.IsNullOrWhiteSpace(text)) // Skip empty headings
-                            {
-                                issueCounter++;
-                                var reference = $"{sectionNumber}.{phaseCounter}.{issueCounter}";
-                                //var issueText = text.Split(new[] { ',' }, 2)[0].Trim();
-                                var issueText = text.Trim();
-                                Logger.Okay($"{reference}: {issueText}");
-
-                                // Locate next table for CVSS
-                                double? cvss = null;
-                                var next = para.NextSibling();
-                                while (next != null && !(next is Table))
-                                    next = next.NextSibling();
-                                if (next is Table table)
-                                    cvss = ExtractCvssFromTable(table);
-
-                                // Get recommendation from database only if requested
-                                var recommendation = includeRecommendations 
-                                    ? GetRecommendationDatabase().GetRecommendation(issueText)
-                                    : string.Empty;
-
-                                yield return new HeadingResult
-                                {
-                                    Issue = issueText,
-                                    Reference = reference,
-                                    CvssScore = cvss,
-                                    Recommendation = recommendation,
-                                    IsPhaseHeader = false
-                                };
+                                Logger.Info($"\n[+] Phase {phaseCounter}: {currentPhase}");
                             }
                         }
                     }
@@ -181,9 +183,160 @@ namespace SummaryTableCreator.Parser
         }
 
         /// <summary>
+        /// Determines the heading level based on style, outline level, or text pattern.
+        /// Returns 0 if not a heading, 2-4 for Heading2-4.
+        /// </summary>
+        private int DetermineHeadingLevel(string? style, int? outlineLevel, string text, int sectionNumber)
+        {
+            // Check explicit style/outline level (primary method)
+            if (string.Equals(style, "Heading4", StringComparison.OrdinalIgnoreCase) || outlineLevel == 3)
+                return 4;
+            if (string.Equals(style, "Heading3", StringComparison.OrdinalIgnoreCase) || outlineLevel == 2)
+                return 3;
+            if (string.Equals(style, "Heading2", StringComparison.OrdinalIgnoreCase) || outlineLevel == 1)
+                return 2;
+
+            // Fall back to text pattern matching for edge cases (check most specific first)
+            // Pattern: 6.1.2 Severity (just the word, like "High", "Medium", "Low")
+            if (Regex.IsMatch(text, $@"^{sectionNumber}\.\d+\.\d+\s+(High|Medium|Low|Critical|Informational)$", RegexOptions.IgnoreCase))
+                return 3;
+            
+            // Pattern: 6.1 Phase Name
+            if (Regex.IsMatch(text, $@"^{sectionNumber}\.\d+\s+\S"))
+                return 2;
+
+            return 0; // Not a heading
+        }
+
+        /// <summary>
+        /// Removes numbering prefix from heading text.
+        /// </summary>
+        private string CleanHeadingText(string text, int sectionNumber, int headingLevel)
+        {
+            string pattern = headingLevel switch
+            {
+                2 => $@"^{sectionNumber}\.\d+\s+",           // 6.1 Phase
+                3 => $@"^{sectionNumber}\.\d+\.\d+\s+",      // 6.1.2 Severity
+                4 => $@"^{sectionNumber}\.\d+\.\d+\.\d+\s+", // 6.1.2.3 Finding
+                _ => string.Empty
+            };
+
+            if (!string.IsNullOrEmpty(pattern))
+            {
+                return Regex.Replace(text, pattern, string.Empty).Trim();
+            }
+
+            return text.Trim();
+        }
+
+        /// <summary>
+        /// Recursively gets all elements from the body, including those inside content controls.
+        /// Returns both the element and its parent for navigation purposes.
+        /// </summary>
+        private IEnumerable<(OpenXmlElement Element, OpenXmlElement? Parent)> GetAllElements(OpenXmlElement element, OpenXmlElement? parent = null)
+        {
+            foreach (var child in element.Elements())
+            {
+                // If it's a paragraph or table, yield it
+                if (child is Paragraph || child is Table)
+                {
+                    yield return (child, parent);
+                }
+                // If it's a content control (SdtElement), recursively process its contents
+                else if (child is SdtElement)
+                {
+                    foreach (var nested in GetAllElements(child, element))
+                    {
+                        yield return nested;
+                    }
+                }
+                // For other containers, recursively process
+                else if (child.HasChildren)
+                {
+                    foreach (var nested in GetAllElements(child, element))
+                    {
+                        yield return nested;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Extracts the issue description from paragraphs following the heading.
+        /// Stops at the next heading or after a certain number of paragraphs.
+        /// </summary>
+        private string ExtractIssueDescription(OpenXmlElement headingElement)
+        {
+            var descriptionParts = new List<string>();
+            var next = headingElement.NextSibling();
+            int maxParagraphs = 10;
+            int count = 0;
+
+            while (next != null && count < maxParagraphs)
+            {
+                // Handle paragraphs directly
+                if (next is Paragraph para)
+                {
+                    var style = para.ParagraphProperties?.ParagraphStyleId?.Val?.Value;
+                    var outlineLevel = para.ParagraphProperties?.OutlineLevel?.Val?.Value;
+                    
+                    if (style != null && (
+                        style.StartsWith("Heading", StringComparison.OrdinalIgnoreCase) ||
+                        outlineLevel.HasValue))
+                    {
+                        break;
+                    }
+
+                    var text = para.InnerText?.Trim();
+                    if (!string.IsNullOrWhiteSpace(text))
+                    {
+                        descriptionParts.Add(text);
+                    }
+                    count++;
+                }
+                // Handle content controls that might contain paragraphs
+                else if (next is SdtElement sdt)
+                {
+                    var innerParas = sdt.Descendants<Paragraph>();
+                    foreach (var innerPara in innerParas)
+                    {
+                        var style = innerPara.ParagraphProperties?.ParagraphStyleId?.Val?.Value;
+                        var outlineLevel = innerPara.ParagraphProperties?.OutlineLevel?.Val?.Value;
+                        
+                        if (style != null && (
+                            style.StartsWith("Heading", StringComparison.OrdinalIgnoreCase) ||
+                            outlineLevel.HasValue))
+                        {
+                            return string.Join(" ", descriptionParts);
+                        }
+
+                        var text = innerPara.InnerText?.Trim();
+                        if (!string.IsNullOrWhiteSpace(text))
+                        {
+                            descriptionParts.Add(text);
+                        }
+                        count++;
+                        
+                        if (count >= maxParagraphs) break;
+                    }
+                }
+                else if (next is Table)
+                {
+                    break;
+                }
+
+                next = next.NextSibling();
+            }
+
+            return string.Join(" ", descriptionParts);
+        }
+
+        /// <summary>
         /// From the given Table, reads the CVSS score in row index 2, column index 1,
         /// taking the first numeric token.
+        /// [DEPRECATED - kept for backward compatibility]
         /// </summary>
+        [Obsolete("CVSS extraction no longer used in new format")]
         private double? ExtractCvssFromTable(Table table)
         {
             var rows = table.Elements<TableRow>().ToList();
