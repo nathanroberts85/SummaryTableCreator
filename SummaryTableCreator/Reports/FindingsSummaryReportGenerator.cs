@@ -20,12 +20,18 @@ namespace SummaryTableCreator.Reports
         /// </summary>
         /// <param name="originalPath">Path to the imported document (used to determine output location).</param>
         /// <param name="results">Parsed heading results.</param>
-        public static void Generate(string originalPath, IEnumerable<HeadingResult> results)
+        /// <param name="useSingleLevelCvss">When true, treats Critical as High for CHECK reporting requirements.</param>
+        /// <param name="includeRecommendations">When true, displays the Issue Description column.</param>
+        public static void Generate(string originalPath, IEnumerable<HeadingResult> results, bool useSingleLevelCvss = false, bool includeRecommendations = true)
         {
             var folder = Path.GetDirectoryName(originalPath) ?? string.Empty;
             var outputPath = Path.Combine(folder, "Summary_of_Findings.docx");
 
             Logger.Info("[+] Generating consolidated findings summary report");
+            if (useSingleLevelCvss)
+            {
+                Logger.Info("[+] Using CHECK reporting mode (Critical treated as High)");
+            }
 
             // Extract template from embedded resources and save to output location
             ExtractTemplateToFile(outputPath);
@@ -33,7 +39,7 @@ namespace SummaryTableCreator.Reports
             // Open the template and populate it with data
             using (var doc = WordprocessingDocument.Open(outputPath, true))
             {
-                PopulateTemplate(doc, results);
+                PopulateTemplate(doc, results, useSingleLevelCvss, includeRecommendations);
             }
 
             Logger.Okay($"[+] Report saved: {outputPath}");
@@ -62,7 +68,7 @@ namespace SummaryTableCreator.Reports
         /// <summary>
         /// Populates the template with findings data.
         /// </summary>
-        private static void PopulateTemplate(WordprocessingDocument doc, IEnumerable<HeadingResult> results)
+        private static void PopulateTemplate(WordprocessingDocument doc, IEnumerable<HeadingResult> results, bool useSingleLevelCvss, bool includeRecommendations)
         {
             var body = doc.MainDocumentPart?.Document?.Body;
             if (body == null)
@@ -87,8 +93,8 @@ namespace SummaryTableCreator.Reports
                 .ToList();
 
             // Add Issue Summary section at the top
-            AddIssueSummarySection(body, phases, issues);
-
+            AddIssueSummarySection(body, phases, issues, useSingleLevelCvss);
+            
             // Add spacing between summary and phase tables
             body.AppendChild(new Paragraph());
 
@@ -107,7 +113,7 @@ namespace SummaryTableCreator.Reports
                     AddPhaseHeading(body, phase, phaseNumber);
 
                     // Add table for this phase
-                    AddFindingsTable(body, findings);
+                    AddFindingsTable(body, findings, useSingleLevelCvss, includeRecommendations);
 
                     // Add spacing between phases
                     body.AppendChild(new Paragraph());
@@ -128,7 +134,7 @@ namespace SummaryTableCreator.Reports
         /// <summary>
         /// Adds the Issue Summary section with heading and table.
         /// </summary>
-        private static void AddIssueSummarySection(Body body, List<HeadingResult> phases, List<HeadingResult> issues)
+        private static void AddIssueSummarySection(Body body, List<HeadingResult> phases, List<HeadingResult> issues, bool useSingleLevelCvss)
         {
             // Add "Issue Summary" heading (not bold)
             var summaryHeading = new Paragraph(
@@ -140,10 +146,10 @@ namespace SummaryTableCreator.Reports
             body.AppendChild(summaryHeading);
 
             // Calculate summary statistics
-            var summaryStats = CreateSummaryStats(phases, issues);
+            var summaryStats = CreateSummaryStats(phases, issues, useSingleLevelCvss);
 
             // Create and add summary table
-            var summaryTable = CreateIssueSummaryTable(summaryStats, phases.Count);
+            var summaryTable = CreateIssueSummaryTable(summaryStats, phases.Count, useSingleLevelCvss);
             body.AppendChild(summaryTable);
         }
 
@@ -151,7 +157,7 @@ namespace SummaryTableCreator.Reports
         /// Creates summary statistics for each phase based on severity counts.
         /// </summary>
         private static Dictionary<string, Dictionary<string, int>> CreateSummaryStats(
-            List<HeadingResult> phases, List<HeadingResult> issues)
+            List<HeadingResult> phases, List<HeadingResult> issues, bool useSingleLevelCvss)
         {
             var summary = new Dictionary<string, Dictionary<string, int>>();
 
@@ -159,17 +165,33 @@ namespace SummaryTableCreator.Reports
             {
                 var phaseIssues = issues.Where(i => i.PhaseName == phase.PhaseName).ToList();
 
-                var stats = new Dictionary<string, int>
-                {
-                    ["Critical"] = phaseIssues.Count(i => i.Severity?.Equals("Critical", StringComparison.OrdinalIgnoreCase) == true),
-                    ["High"] = phaseIssues.Count(i => i.Severity?.Equals("High", StringComparison.OrdinalIgnoreCase) == true),
-                    ["Medium"] = phaseIssues.Count(i => i.Severity?.Equals("Medium", StringComparison.OrdinalIgnoreCase) == true),
-                    ["Low"] = phaseIssues.Count(i => i.Severity?.Equals("Low", StringComparison.OrdinalIgnoreCase) == true),
-                    ["Info"] = phaseIssues.Count(i => i.Severity?.Equals("Informational", StringComparison.OrdinalIgnoreCase) == true 
-                                                       || i.Severity?.Equals("Info", StringComparison.OrdinalIgnoreCase) == true),
-                    ["Total"] = phaseIssues.Count
-                };
+                var stats = new Dictionary<string, int>();
 
+                if (useSingleLevelCvss)
+                {
+                    // CHECK reporting: Critical becomes High, no Critical column
+                    stats["High"] = phaseIssues.Count(i => 
+                        i.Severity?.Equals("Critical", StringComparison.OrdinalIgnoreCase) == true ||
+                        i.Severity?.Equals("High", StringComparison.OrdinalIgnoreCase) == true);
+                    stats["Medium"] = phaseIssues.Count(i => i.Severity?.Equals("Medium", StringComparison.OrdinalIgnoreCase) == true);
+                    stats["Low"] = phaseIssues.Count(i => i.Severity?.Equals("Low", StringComparison.OrdinalIgnoreCase) == true);
+                    stats["Info"] = phaseIssues.Count(i => 
+                        i.Severity?.Equals("Informational", StringComparison.OrdinalIgnoreCase) == true ||
+                        i.Severity?.Equals("Info", StringComparison.OrdinalIgnoreCase) == true);
+                }
+                else
+                {
+                    // Standard reporting: Separate Critical and High
+                    stats["Critical"] = phaseIssues.Count(i => i.Severity?.Equals("Critical", StringComparison.OrdinalIgnoreCase) == true);
+                    stats["High"] = phaseIssues.Count(i => i.Severity?.Equals("High", StringComparison.OrdinalIgnoreCase) == true);
+                    stats["Medium"] = phaseIssues.Count(i => i.Severity?.Equals("Medium", StringComparison.OrdinalIgnoreCase) == true);
+                    stats["Low"] = phaseIssues.Count(i => i.Severity?.Equals("Low", StringComparison.OrdinalIgnoreCase) == true);
+                    stats["Info"] = phaseIssues.Count(i => 
+                        i.Severity?.Equals("Informational", StringComparison.OrdinalIgnoreCase) == true ||
+                        i.Severity?.Equals("Info", StringComparison.OrdinalIgnoreCase) == true);
+                }
+
+                stats["Total"] = phaseIssues.Count;
                 summary[phase.PhaseName] = stats;
             }
 
@@ -179,7 +201,7 @@ namespace SummaryTableCreator.Reports
         /// <summary>
         /// Creates the issue summary table with severity counts.
         /// </summary>
-        private static Table CreateIssueSummaryTable(Dictionary<string, Dictionary<string, int>> summaryStats, int phaseCount)
+        private static Table CreateIssueSummaryTable(Dictionary<string, Dictionary<string, int>> summaryStats, int phaseCount, bool useSingleLevelCvss)
         {
             var table = new Table();
 
@@ -201,31 +223,40 @@ namespace SummaryTableCreator.Reports
             );
             table.AppendChild(tableProperties);
 
-            // Define table grid with 7 columns
-            // Landscape A4 usable width ~15,840 twips (with standard margins)
+            // Define table grid (no GridColumn needed with explicit cell widths)
             var tableGrid = new TableGrid();
             table.AppendChild(tableGrid);
 
             // Add header row
-            AddIssueSummaryHeaderRow(table);
+            AddIssueSummaryHeaderRow(table, useSingleLevelCvss);
 
             // Add data rows for each phase
             foreach (var kvp in summaryStats.OrderBy(k => k.Key))
             {
-                AddIssueSummaryDataRow(table, kvp.Key, kvp.Value, false);
+                AddIssueSummaryDataRow(table, kvp.Key, kvp.Value, false, useSingleLevelCvss);
             }
 
             // Calculate and add totals row
-            var totals = new Dictionary<string, int>
+            var totals = new Dictionary<string, int>();
+            
+            if (useSingleLevelCvss)
             {
-                ["Critical"] = summaryStats.Values.Sum(s => s["Critical"]),
-                ["High"] = summaryStats.Values.Sum(s => s["High"]),
-                ["Medium"] = summaryStats.Values.Sum(s => s["Medium"]),
-                ["Low"] = summaryStats.Values.Sum(s => s["Low"]),
-                ["Info"] = summaryStats.Values.Sum(s => s["Info"]),
-                ["Total"] = summaryStats.Values.Sum(s => s["Total"])
-            };
-            AddIssueSummaryDataRow(table, "Total", totals, true);
+                totals["High"] = summaryStats.Values.Sum(s => s["High"]);
+                totals["Medium"] = summaryStats.Values.Sum(s => s["Medium"]);
+                totals["Low"] = summaryStats.Values.Sum(s => s["Low"]);
+                totals["Info"] = summaryStats.Values.Sum(s => s["Info"]);
+            }
+            else
+            {
+                totals["Critical"] = summaryStats.Values.Sum(s => s["Critical"]);
+                totals["High"] = summaryStats.Values.Sum(s => s["High"]);
+                totals["Medium"] = summaryStats.Values.Sum(s => s["Medium"]);
+                totals["Low"] = summaryStats.Values.Sum(s => s["Low"]);
+                totals["Info"] = summaryStats.Values.Sum(s => s["Info"]);
+            }
+            
+            totals["Total"] = summaryStats.Values.Sum(s => s["Total"]);
+            AddIssueSummaryDataRow(table, "Total", totals, true, useSingleLevelCvss);
 
             return table;
         }
@@ -233,7 +264,7 @@ namespace SummaryTableCreator.Reports
         /// <summary>
         /// Adds the header row to the issue summary table.
         /// </summary>
-        private static void AddIssueSummaryHeaderRow(Table table)
+        private static void AddIssueSummaryHeaderRow(Table table, bool useSingleLevelCvss)
         {
             var headerRow = new TableRow();
 
@@ -243,17 +274,30 @@ namespace SummaryTableCreator.Reports
             );
             headerRow.AppendChild(rowProperties);
             
-            var headers = new[] { "Description", "Critical", "High", "Medium", "Low", "Info", "Total" };
-            var widths = new[] 
-            { 
-                ReportStyles.SUMMARY_COL_PHASE,
-                ReportStyles.SUMMARY_COL_CRITICAL,
-                ReportStyles.SUMMARY_COL_HIGH,
-                ReportStyles.SUMMARY_COL_MEDIUM,
-                ReportStyles.SUMMARY_COL_LOW,
-                ReportStyles.SUMMARY_COL_INFO,
-                ReportStyles.SUMMARY_COL_TOTAL
-            };
+            var headers = useSingleLevelCvss
+                ? new[] { "Description", "High", "Medium", "Low", "Info", "Total" }
+                : new[] { "Description", "Critical", "High", "Medium", "Low", "Info", "Total" };
+                
+            var widths = useSingleLevelCvss
+                ? new[] 
+                { 
+                    ReportStyles.SUMMARY_COL_PHASE,
+                    ReportStyles.SUMMARY_COL_HIGH,
+                    ReportStyles.SUMMARY_COL_MEDIUM,
+                    ReportStyles.SUMMARY_COL_LOW,
+                    ReportStyles.SUMMARY_COL_INFO,
+                    ReportStyles.SUMMARY_COL_TOTAL
+                }
+                : new[] 
+                { 
+                    ReportStyles.SUMMARY_COL_PHASE,
+                    ReportStyles.SUMMARY_COL_CRITICAL,
+                    ReportStyles.SUMMARY_COL_HIGH,
+                    ReportStyles.SUMMARY_COL_MEDIUM,
+                    ReportStyles.SUMMARY_COL_LOW,
+                    ReportStyles.SUMMARY_COL_INFO,
+                    ReportStyles.SUMMARY_COL_TOTAL
+                };
 
             for (int i = 0; i < headers.Length; i++)
             {
@@ -267,39 +311,56 @@ namespace SummaryTableCreator.Reports
         /// <summary>
         /// Adds a data row to the issue summary table.
         /// </summary>
-        private static void AddIssueSummaryDataRow(Table table, string phaseName, Dictionary<string, int> stats, bool isTotalsRow)
+        private static void AddIssueSummaryDataRow(Table table, string phaseName, Dictionary<string, int> stats, bool isTotalsRow, bool useSingleLevelCvss)
         {
             var row = new TableRow();
-    
-            // Apply row height (1 cm = 567 twips)
+
+            // Apply row height
             var rowProperties = new TableRowProperties(
-                new TableRowHeight() { Val = (uint)(ReportStyles.ROW_HEIGHT) }
+                new TableRowHeight() { Val = (uint)ReportStyles.ROW_HEIGHT }
             );
             row.AppendChild(rowProperties);
 
-            var widths = new[] 
-            { 
-                ReportStyles.SUMMARY_COL_PHASE,
-                ReportStyles.SUMMARY_COL_CRITICAL,
-                ReportStyles.SUMMARY_COL_HIGH,
-                ReportStyles.SUMMARY_COL_MEDIUM,
-                ReportStyles.SUMMARY_COL_LOW,
-                ReportStyles.SUMMARY_COL_INFO,
-                ReportStyles.SUMMARY_COL_TOTAL
-            };
+            var widths = useSingleLevelCvss
+                ? new[] 
+                { 
+                    ReportStyles.SUMMARY_COL_PHASE,
+                    ReportStyles.SUMMARY_COL_HIGH,
+                    ReportStyles.SUMMARY_COL_MEDIUM,
+                    ReportStyles.SUMMARY_COL_LOW,
+                    ReportStyles.SUMMARY_COL_INFO,
+                    ReportStyles.SUMMARY_COL_TOTAL
+                }
+                : new[] 
+                { 
+                    ReportStyles.SUMMARY_COL_PHASE,
+                    ReportStyles.SUMMARY_COL_CRITICAL,
+                    ReportStyles.SUMMARY_COL_HIGH,
+                    ReportStyles.SUMMARY_COL_MEDIUM,
+                    ReportStyles.SUMMARY_COL_LOW,
+                    ReportStyles.SUMMARY_COL_INFO,
+                    ReportStyles.SUMMARY_COL_TOTAL
+                };
 
-            // First column (Phase name) - ALWAYS bold (both regular rows and totals row)
+            // First column (Phase name) - ALWAYS bold
             row.AppendChild(CreateStyledCell(phaseName, ReportStyles.CELL_STYLE, false, null, true, widths[0]));
 
+            int idx = 1;
+            
+            // Critical column (only if not CHECK mode)
+            if (!useSingleLevelCvss)
+            {
+                row.AppendChild(CreateStyledCell(stats["Critical"].ToString(), ReportStyles.CELL_STYLE, false, null, isTotalsRow, widths[idx++]));
+            }
+
             // Severity columns - bold only if totals row
-            row.AppendChild(CreateStyledCell(stats["Critical"].ToString(), ReportStyles.CELL_STYLE, false, null, isTotalsRow, widths[1]));
-            row.AppendChild(CreateStyledCell(stats["High"].ToString(), ReportStyles.CELL_STYLE, false, null, isTotalsRow, widths[2]));
-            row.AppendChild(CreateStyledCell(stats["Medium"].ToString(), ReportStyles.CELL_STYLE, false, null, isTotalsRow, widths[3]));
-            row.AppendChild(CreateStyledCell(stats["Low"].ToString(), ReportStyles.CELL_STYLE, false, null, isTotalsRow, widths[4]));
-            row.AppendChild(CreateStyledCell(stats["Info"].ToString(), ReportStyles.CELL_STYLE, false, null, isTotalsRow, widths[5]));
+            row.AppendChild(CreateStyledCell(stats["High"].ToString(), ReportStyles.CELL_STYLE, false, null, isTotalsRow, widths[idx++]));
+            row.AppendChild(CreateStyledCell(stats["Medium"].ToString(), ReportStyles.CELL_STYLE, false, null, isTotalsRow, widths[idx++]));
+            row.AppendChild(CreateStyledCell(stats["Low"].ToString(), ReportStyles.CELL_STYLE, false, null, isTotalsRow, widths[idx++]));
+            row.AppendChild(CreateStyledCell(stats["Info"].ToString(), ReportStyles.CELL_STYLE, false, null, isTotalsRow, widths[idx++]));
 
             // Last column (Total) - ALWAYS bold
-            row.AppendChild(CreateStyledCell(stats["Total"].ToString(), ReportStyles.CELL_STYLE, false, null, true, widths[6]));
+            row.AppendChild(CreateStyledCell(stats["Total"].ToString(), ReportStyles.CELL_STYLE, false, null, true, widths[idx]));
 
             table.AppendChild(row);
         }
@@ -328,13 +389,13 @@ namespace SummaryTableCreator.Reports
         /// <summary>
         /// Creates a findings table for a phase.
         /// </summary>
-        private static void AddFindingsTable(Body body, List<HeadingResult> findings)
+        private static void AddFindingsTable(Body body, List<HeadingResult> findings, bool useSingleLevelCvss, bool includeRecommendations)
         {
             var table = new Table();
 
             // Set table to full width (100% of page width) and apply table style
             var tableProperties = new TableProperties(
-                new TableStyle() { Val = ReportStyles.TABLE_STYLE }, // Apply TBLAFFECTEDHOSTS style
+                new TableStyle() { Val = ReportStyles.TABLE_STYLE },
                 new TableWidth() { Width = "5000", Type = TableWidthUnitValues.Pct },
                 new TableIndentation() { Width = 0, Type = TableWidthUnitValues.Dxa },
                 new TableLook() 
@@ -352,10 +413,6 @@ namespace SummaryTableCreator.Reports
 
             // Define table grid with 4 columns
             var tableGrid = new TableGrid();
-            tableGrid.AppendChild(new GridColumn() { Width = "1500" });  // Risk Rating - 15%
-            tableGrid.AppendChild(new GridColumn() { Width = "2500" });  // Issue - 25%
-            tableGrid.AppendChild(new GridColumn() { Width = "1500" });  // Reference - 15%
-            tableGrid.AppendChild(new GridColumn() { Width = "4500" });  // Description - 45%
             table.AppendChild(tableGrid);
 
             // Add header row
@@ -364,7 +421,7 @@ namespace SummaryTableCreator.Reports
             // Add data rows
             foreach (var finding in findings)
             {
-                AddDataRow(table, finding);
+                AddDataRow(table, finding, useSingleLevelCvss, includeRecommendations);
             }
 
             body.AppendChild(table);
@@ -399,7 +456,7 @@ namespace SummaryTableCreator.Reports
         /// <summary>
         /// Adds a data row to the table using TABLECELL style.
         /// </summary>
-        private static void AddDataRow(Table table, HeadingResult finding)
+        private static void AddDataRow(Table table, HeadingResult finding, bool useSingleLevelCvss, bool includeRecommendations)
         {
             var row = new TableRow();
             var widths = new[] 
@@ -410,8 +467,15 @@ namespace SummaryTableCreator.Reports
                 ReportStyles.FINDINGS_COL_DESCRIPTION
             };
 
+            // Determine severity to display (convert Critical to High if CHECK mode)
+            var displaySeverity = finding.Severity;
+            if (useSingleLevelCvss && finding.Severity?.Equals("Critical", StringComparison.OrdinalIgnoreCase) == true)
+            {
+                displaySeverity = "High";
+            }
+
             // Severity cell (with severity-specific paragraph style)
-            row.AppendChild(CreateStyledCell(finding.Severity ?? "", ReportStyles.CELL_STYLE, true, finding.Severity, false, widths[0]));
+            row.AppendChild(CreateStyledCell(displaySeverity ?? "", ReportStyles.CELL_STYLE, true, displaySeverity, false, widths[0]));
 
             // Title cell (bold)
             row.AppendChild(CreateStyledCell(finding.Title ?? "", ReportStyles.CELL_STYLE, false, null, isBold: true, cellWidth: widths[1]));
@@ -419,35 +483,43 @@ namespace SummaryTableCreator.Reports
             // Reference cell
             row.AppendChild(CreateStyledCell(finding.Reference ?? "", ReportStyles.CELL_STYLE, false, null, false, widths[2]));
 
-            // Issue Description cell
-            row.AppendChild(CreateStyledCell(finding.IssueDescription ?? "", ReportStyles.CELL_STYLE, false, null, false, widths[3]));
+            // Issue Description cell - only populate if includeRecommendations is true
+            var issueDescription = includeRecommendations ? (finding.IssueDescription ?? "") : "";
+            row.AppendChild(CreateStyledCell(issueDescription, ReportStyles.CELL_STYLE, false, null, false, widths[3]));
 
             table.AppendChild(row);
         }
 
         /// <summary>
-        /// Creates a table cell with a specified paragraph style and optional severity formatting.
-        /// </summary>
-        private static TableCell CreateStyledCell(string text, string styleName, bool applySeverityStyle, string? severity, bool isBold = false, decimal? cellWidth = null)
+ /// Creates a table cell with a specified paragraph style and optional severity formatting.
+ /// </summary>
+private static TableCell CreateStyledCell(string text, string styleName, bool applySeverityStyle, string? severity, bool isBold = false, decimal? cellWidth = null)
+{
+    var cell = new TableCell();
+
+    // Apply cell width if specified (using decimal for precision, converted to string)
+    if (cellWidth.HasValue)
+    {
+        var cellProperties = new TableCellProperties(
+            new TableCellWidth() { Width = cellWidth.Value.ToString("0.###"), Type = TableWidthUnitValues.Dxa }
+        );
+        cell.AppendChild(cellProperties);
+    }
+
+    // Determine which style to use - severity style overrides base style if applicable
+    var finalStyleName = (applySeverityStyle && !string.IsNullOrEmpty(severity)) 
+        ? ReportStyles.GetSeverityColor(severity) 
+        : styleName;
+
+    // Handle text with newlines by creating multiple paragraphs or line breaks
+    if (text.Contains('\n'))
+    {
+        // Split by double newline for paragraph breaks
+        var paragraphs = text.Split(new[] { "\n\n" }, StringSplitOptions.None);
+        
+        foreach (var paragraphText in paragraphs)
         {
-            var cell = new TableCell();
-
-            // Apply cell width if specified (using decimal for precision, converted to string)
-            if (cellWidth.HasValue)
-            {
-                var cellProperties = new TableCellProperties(
-                    new TableCellWidth() { Width = cellWidth.Value.ToString("0.###"), Type = TableWidthUnitValues.Dxa }
-                );
-                cell.AppendChild(cellProperties);
-            }
-
-            // Create paragraph with style reference
             var paragraph = new Paragraph();
-            
-            // Determine which style to use - severity style overrides base style if applicable
-            var finalStyleName = (applySeverityStyle && !string.IsNullOrEmpty(severity)) 
-                ? ReportStyles.GetSeverityColor(severity) 
-                : styleName;
             
             // Apply paragraph style
             var paragraphProps = new ParagraphProperties(
@@ -455,21 +527,59 @@ namespace SummaryTableCreator.Reports
             );
             paragraph.AppendChild(paragraphProps);
 
-            // Create run with text
-            var run = new Run(new Text(text) { Space = SpaceProcessingModeValues.Preserve });
+            // Split by single newline for line breaks within paragraph
+            var lines = paragraphText.Split('\n');
             
-            // Add bold formatting if requested
-            if (isBold)
+            for (int i = 0; i < lines.Length; i++)
             {
-                var runProps = new RunProperties(new Bold());
-                run.InsertAt(runProps, 0);
+                var run = new Run();
+                
+                // Add bold formatting if requested
+                if (isBold)
+                {
+                    var runProps = new RunProperties(new Bold());
+                    run.AppendChild(runProps);
+                }
+                
+                run.AppendChild(new Text(lines[i]) { Space = SpaceProcessingModeValues.Preserve });
+                paragraph.AppendChild(run);
+                
+                // Add line break if not the last line
+                if (i < lines.Length - 1)
+                {
+                    paragraph.AppendChild(new Run(new Break()));
+                }
             }
-
-            paragraph.AppendChild(run);
-            cell.AppendChild(paragraph);
             
-            return cell;
+            cell.AppendChild(paragraph);
+        }
+    }
+    else
+    {
+        // Single paragraph (no newlines)
+        var paragraph = new Paragraph();
+        
+        // Apply paragraph style
+        var paragraphProps = new ParagraphProperties(
+            new ParagraphStyleId() { Val = finalStyleName }
+        );
+        paragraph.AppendChild(paragraphProps);
+
+        // Create run with text
+        var run = new Run(new Text(text) { Space = SpaceProcessingModeValues.Preserve });
+        
+        // Add bold formatting if requested
+        if (isBold)
+        {
+            var runProps = new RunProperties(new Bold());
+            run.InsertAt(runProps, 0);
         }
 
+        paragraph.AppendChild(run);
+        cell.AppendChild(paragraph);
+    }
+    
+    return cell;
+}
     }
 }

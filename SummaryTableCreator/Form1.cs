@@ -20,7 +20,7 @@ namespace SummaryTableCreator
             nud_report_section.Enabled = false; // Disable numeric up-down for section selection
             btn_extract.Enabled = false; // Disable extract button until import
             cb_cvss.Enabled = false; // Disable CVSS checkbox until extraction
-            cb_cvss_score.Enabled = false; // Disable CVSS score checkbox until extraction
+            //cb_cvss_score.Enabled = false; // Disable CVSS score checkbox until extraction
             cb_interim_excel.Enabled = false; // Disabled interim Excel checkbox by default
             cb_recommendations.Enabled = false; // Disable recommendations checkbox until extraction
             btn_generate_table.Enabled = false;
@@ -42,7 +42,7 @@ namespace SummaryTableCreator
             toolTip1.SetToolTip(nud_report_section, "Choose which report section to parse (e.g., section 6)");
             toolTip1.SetToolTip(btn_extract, "Extract headings and issues from the selected section");
             toolTip1.SetToolTip(cb_cvss, "Commercial format by default, enable to switch to CHECK format");
-            toolTip1.SetToolTip(cb_cvss_score, "Show numerical CVSS scores for later report compilation");
+            //toolTip1.SetToolTip(cb_cvss_score, "Show numerical CVSS scores for later report compilation");
             toolTip1.SetToolTip(cb_recommendations, "Populate the Issue Descriptions column with data from the JSON database");
             toolTip1.SetToolTip(btn_generate_table, "Outputs the summary tables in new documents in the same folder");
             toolTip1.SetToolTip(cb_interim_excel, "Outputs the summary table in Excel format with phases split on sheets");
@@ -55,7 +55,7 @@ namespace SummaryTableCreator
             nud_report_section.Enabled = false; // Disable numeric up-down for section selection
             btn_extract.Enabled = false; // Disable extract button until import
             cb_cvss.Enabled = false; // Disable CVSS checkbox until extraction
-            cb_cvss_score.Enabled = false; // Disable CVSS score checkbox until extraction
+            //cb_cvss_score.Enabled = false; // Disable CVSS score checkbox until extraction
             cb_interim_excel.Enabled = false; // Disabled interim Excel checkbox by default
             cb_recommendations.Enabled = false; // Disable recommendations checkbox until extraction
             btn_generate_table.Enabled = false;
@@ -113,7 +113,7 @@ namespace SummaryTableCreator
 
                 btn_generate_table.Enabled = _results.Any();
                 cb_cvss.Enabled = true; // Enable CVSS checkbox
-                cb_cvss_score.Enabled = true; // Enable CVSS score checkbox
+                //cb_cvss_score.Enabled = true; // Enable CVSS score checkbox
                 cb_interim_excel.Enabled = true; // Enable interim Excel checkbox by default
                 cb_recommendations.Enabled = true; // Enable recommendations checkbox
             }
@@ -141,19 +141,19 @@ namespace SummaryTableCreator
             try
             {
                 bool generateExcel = cb_interim_excel.Checked;
+                bool useSingleLevel = cb_cvss.Checked; // CHECK reporting mode
+                bool includeRecommendations = cb_recommendations.Checked;
 
                 if (generateExcel)
                 {
-                    // Generate Excel report (keep for now)
-                    bool useSingleLevel = cb_cvss.Checked;
+                    // Generate Excel report
                     bool showCvssScore = cb_cvss_score.Checked;
-                    bool includeRecommendations = cb_recommendations.Checked;
                     ExcelReportGenerator.Generate(lbl_filepath.Text, _results, useSingleLevel, showCvssScore, includeRecommendations);
                 }
                 else
                 {
                     // Generate new consolidated Word report
-                    FindingsSummaryReportGenerator.Generate(lbl_filepath.Text, _results);
+                    FindingsSummaryReportGenerator.Generate(lbl_filepath.Text, _results, useSingleLevel, includeRecommendations);
                 }
             }
             catch (Exception ex)

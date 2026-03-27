@@ -118,7 +118,13 @@ namespace SummaryTableCreator.Parser
                                 
                                 Logger.Okay($"    {reference}: {findingTitle}");
 
-                                string issueDescription = ExtractIssueDescription(item.Parent ?? para);
+                                // Get issue description from database if enabled, otherwise return empty
+                                string issueDescription = string.Empty;
+                                if (includeRecommendations)
+                                {
+                                    var db = GetRecommendationDatabase();
+                                    issueDescription = db.GetRecommendation(findingTitle);
+                                }
 
                                 yield return new HeadingResult
                                 {

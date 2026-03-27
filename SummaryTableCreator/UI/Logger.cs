@@ -31,7 +31,7 @@
         /// </summary>
         public static void Okay(string message)
         {
-            Log(message, Color.Green);
+            Log(message, Color.LimeGreen);
         }
 
         /// <summary>
