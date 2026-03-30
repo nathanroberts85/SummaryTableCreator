@@ -118,12 +118,15 @@ namespace SummaryTableCreator.Parser
                                 
                                 Logger.Okay($"    {reference}: {findingTitle}");
 
-                                // Get issue description from database if enabled, otherwise return empty
+                                // Get issue data from database if enabled
                                 string issueDescription = string.Empty;
+                                string recommendation = string.Empty;
+                                
                                 if (includeRecommendations)
                                 {
                                     var db = GetRecommendationDatabase();
-                                    issueDescription = db.GetRecommendation(findingTitle);
+                                    issueDescription = db.GetIssueDescription(findingTitle);
+                                    recommendation = db.GetRecommendation(findingTitle);
                                 }
 
                                 yield return new HeadingResult
@@ -136,7 +139,7 @@ namespace SummaryTableCreator.Parser
                                     Title = findingTitle,
                                     IssueDescription = issueDescription,
                                     CvssScore = null,
-                                    Recommendation = string.Empty
+                                    Recommendation = recommendation
                                 };
                             }
                             else if (headingLevel == 3) // Heading3 (Severity)
