@@ -483,9 +483,9 @@ namespace SummaryTableCreator.Reports
             // Reference cell
             row.AppendChild(CreateStyledCell(finding.Reference ?? "", ReportStyles.CELL_STYLE, false, null, false, widths[2]));
 
-            // Issue Description cell - only populate if includeRecommendations is true
+            // Issue Description cell - only populate if includeRecommendations is true, with justified alignment
             var issueDescription = includeRecommendations ? (finding.IssueDescription ?? "") : "";
-            row.AppendChild(CreateStyledCell(issueDescription, ReportStyles.CELL_STYLE, false, null, false, widths[3]));
+            row.AppendChild(CreateStyledCell(issueDescription, ReportStyles.CELL_STYLE, false, null, false, widths[3], JustificationValues.Both));
 
             table.AppendChild(row);
         }
@@ -493,7 +493,7 @@ namespace SummaryTableCreator.Reports
         /// <summary>
  /// Creates a table cell with a specified paragraph style and optional severity formatting.
  /// </summary>
-private static TableCell CreateStyledCell(string text, string styleName, bool applySeverityStyle, string? severity, bool isBold = false, decimal? cellWidth = null)
+private static TableCell CreateStyledCell(string text, string styleName, bool applySeverityStyle, string? severity, bool isBold = false, decimal? cellWidth = null, JustificationValues? justification = null)
 {
     var cell = new TableCell();
 
@@ -521,10 +521,17 @@ private static TableCell CreateStyledCell(string text, string styleName, bool ap
         {
             var paragraph = new Paragraph();
             
-            // Apply paragraph style
+            // Apply paragraph style and justification
             var paragraphProps = new ParagraphProperties(
                 new ParagraphStyleId() { Val = finalStyleName }
             );
+            
+            // Add justification if specified
+            if (justification.HasValue)
+            {
+                paragraphProps.AppendChild(new Justification() { Val = justification.Value });
+            }
+            
             paragraph.AppendChild(paragraphProps);
 
             // Split by single newline for line breaks within paragraph
@@ -559,10 +566,17 @@ private static TableCell CreateStyledCell(string text, string styleName, bool ap
         // Single paragraph (no newlines)
         var paragraph = new Paragraph();
         
-        // Apply paragraph style
+        // Apply paragraph style and justification
         var paragraphProps = new ParagraphProperties(
             new ParagraphStyleId() { Val = finalStyleName }
         );
+        
+        // Add justification if specified
+        if (justification.HasValue)
+        {
+            paragraphProps.AppendChild(new Justification() { Val = justification.Value });
+        }
+        
         paragraph.AppendChild(paragraphProps);
 
         // Create run with text
