@@ -15,22 +15,22 @@ namespace SummaryTableCreator.Reports
             var folder = Path.GetDirectoryName(originalPath) ?? string.Empty;
             var outputPath = Path.Combine(folder, "Interim_Report.xlsx");
 
-            Logger.Info($"[+] Using {(useSingleLevelCvss ? "CHECK" : "Non-CHECK")} CVSS rating system");
+            Logger.Info($"Using {(useSingleLevelCvss ? "CHECK" : "Non-CHECK")} CVSS rating system");
 
-            // Get phases and group issues by phase
-            var phases = results.Where(r => r.IsPhaseHeader).OrderBy(r => r.Reference).ToList();
+            // Get phases and issues
+            var phases = results.Where(r => r.IsPhaseHeader).ToList();
             var issues = results.Where(r => !r.IsPhaseHeader).ToList();
 
             using (var document = SpreadsheetDocument.Create(outputPath, SpreadsheetDocumentType.Workbook))
             {
-                CreateWorkbook(document, phases, issues, useSingleLevelCvss, showCvssScore, includeRecommendations);
+                CreateWorkbook(document, phases, issues, useSingleLevelCvss, includeRecommendations);
             }
 
-            Logger.Okay("[+] Excel report generation complete");
+            Logger.Okay("Excel report generation complete");
         }
 
         private static void CreateWorkbook(SpreadsheetDocument document, List<HeadingResult> phases,
-            List<HeadingResult> issues, bool useSingleLevelCvss, bool showCvssScore, bool includeRecommendations)
+            List<HeadingResult> issues, bool useSingleLevelCvss, bool includeRecommendations)
         {
             // Create workbook and worksheet parts
             var workbookPart = document.AddWorkbookPart();
@@ -41,14 +41,12 @@ namespace SummaryTableCreator.Reports
 
             foreach (var phase in phases)
             {
-                // Get issues for this phase
-                var phaseIssues = issues.Where(i => i.Reference.StartsWith(phase.Reference + "."))
-                                       .OrderByDescending(i => i.CvssScore ?? 0)
-                                       .ToList();
+                // Get issues for this phase in document order (no sorting)
+                var phaseIssues = issues.Where(i => i.PhaseName == phase.PhaseName).ToList();
 
                 // Create worksheet for this phase
                 var worksheetPart = workbookPart.AddNewPart<WorksheetPart>();
-                var sheetName = SanitizeSheetName(phase.Issue);
+                var sheetName = SanitizeSheetName(phase.PhaseName);
 
                 var sheet = new Sheet()
                 {
@@ -59,54 +57,49 @@ namespace SummaryTableCreator.Reports
                 sheets.Append(sheet);
 
                 // Populate worksheet with phase issues
-                PopulateWorksheet(worksheetPart, phaseIssues, useSingleLevelCvss, showCvssScore, includeRecommendations);
+                PopulateWorksheet(worksheetPart, phaseIssues, useSingleLevelCvss, includeRecommendations);
             }
         }
 
         private static void PopulateWorksheet(WorksheetPart worksheetPart, List<HeadingResult> phaseIssues,
-            bool useSingleLevelCvss, bool showCvssScore, bool includeRecommendations)
+            bool useSingleLevelCvss, bool includeRecommendations)
         {
             var worksheet = new Worksheet();
             var sheetData = new SheetData();
 
-            // Add header row with the requested columns
+            // Add header row
             var headerRow = new Row() { RowIndex = 1 };
             headerRow.Append(
                 CreateCell("Reference", CellValues.String),
                 CreateCell("Risk", CellValues.String),
                 CreateCell("Name", CellValues.String),
-                CreateCell("Affected Host/IP", CellValues.String),
+                CreateCell("Affected Hosts", CellValues.String),
                 CreateCell("Description", CellValues.String),
                 CreateCell("Solution", CellValues.String)
             );
 
             sheetData.Append(headerRow);
 
-            // Add data rows
+            // Add data rows (in document order)
             uint rowIndex = 2;
-            var processedIssues = new HashSet<string>();
 
             foreach (var issue in phaseIssues)
             {
-                if (processedIssues.Contains(issue.Issue))
-                    continue;
+                // Map severity to risk rating (with CHECK mode support)
+                var risk = MapSeverityToRisk(issue.Severity, useSingleLevelCvss);
 
-                processedIssues.Add(issue.Issue);
-
-                var rating = MapRating(issue.CvssScore, useSingleLevelCvss);
-                var formattedRating = showCvssScore ? FormatRatingWithScore(rating, issue.CvssScore) : rating;
-
-                // Get solution text (recommendation if enabled, otherwise blank)
-                var solutionText = includeRecommendations ? (issue.Recommendation ?? "") : "";
+                // Get description and solution from JSON if enabled
+                var description = includeRecommendations ? (issue.IssueDescription ?? "") : "";
+                var solution = includeRecommendations ? (issue.Recommendation ?? "") : "";
 
                 var dataRow = new Row() { RowIndex = rowIndex++ };
                 dataRow.Append(
-                    CreateCell(issue.Reference, CellValues.String),        // Reference
-                    CreateCell(formattedRating, CellValues.String),        // Risk
-                    CreateCell(issue.Issue, CellValues.String),            // Name
-                    CreateCell("", CellValues.String),                     // Affected Host/IP (blank)
-                    CreateCell("", CellValues.String),                     // Description (blank)
-                    CreateCell(solutionText, CellValues.String)            // Solution (recommendations)
+                    CreateCell(issue.Reference ?? "", CellValues.String),     // Reference (e.g., 6.1.1.1)
+                    CreateCell(risk, CellValues.String),                       // Risk (Severity)
+                    CreateCell(issue.Title ?? "", CellValues.String),          // Name (Issue Title)
+                    CreateCell("", CellValues.String),                         // Affected Hosts (blank)
+                    CreateCell(description, CellValues.String),                // Description (ISSUE_TABLE)
+                    CreateCell(solution, CellValues.String)                    // Solution (RECOMMENDATION)
                 );
 
                 sheetData.Append(dataRow);
@@ -135,32 +128,26 @@ namespace SummaryTableCreator.Reports
             return sanitized.Length > 31 ? sanitized.Substring(0, 31) : sanitized;
         }
 
-        // Reuse existing mapping methods from SummaryReportGenerator
-        private static string MapRating(double? cvss, bool useSingleLevelCvss)
+        /// <summary>
+        /// Maps severity string to risk rating, with CHECK mode support.
+        /// </summary>
+        private static string MapSeverityToRisk(string? severity, bool useSingleLevelCvss)
         {
-            if (!cvss.HasValue) return string.Empty;
+            if (string.IsNullOrEmpty(severity))
+                return string.Empty;
 
-            if (useSingleLevelCvss)
-            {
-                if (cvss >= 7.0) return "High";
-                if (cvss >= 4.0) return "Medium";
-                if (cvss >= 1.0) return "Low";
-                return "Informational";
-            }
-            else
-            {
-                if (cvss >= 9.0) return "Critical";
-                if (cvss >= 7.0) return "High";
-                if (cvss >= 4.0) return "Medium";
-                if (cvss >= 1.0) return "Low";
-                return "Informational";
-            }
-        }
+            // Normalize severity for comparison
+            var normalizedSeverity = severity.Trim();
 
-        private static string FormatRatingWithScore(string rating, double? cvss)
-        {
-            if (!cvss.HasValue) return rating;
-            return $"{rating} ({cvss:F1})";
+            // CHECK mode: treat Critical as High
+            if (useSingleLevelCvss && 
+                normalizedSeverity.Equals("Critical", StringComparison.OrdinalIgnoreCase))
+            {
+                return "High";
+            }
+
+            // Return severity as-is (case-preserved)
+            return normalizedSeverity;
         }
     }
 }

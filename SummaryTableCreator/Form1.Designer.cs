@@ -139,9 +139,9 @@
             cb_cvss.ForeColor = Color.AliceBlue;
             cb_cvss.Location = new Point(12, 342);
             cb_cvss.Name = "cb_cvss";
-            cb_cvss.Size = new Size(190, 23);
+            cb_cvss.Size = new Size(118, 23);
             cb_cvss.TabIndex = 7;
-            cb_cvss.Text = "CHECK CVSS Scoring";
+            cb_cvss.Text = "CHECK Test";
             cb_cvss.UseVisualStyleBackColor = false;
             // 
             // pictureBox1
