@@ -61,7 +61,7 @@ namespace SummaryTableCreator
             btn_generate_table.Enabled = false;
             using (var dlg = new OpenFileDialog())
             {
-                dlg.Filter = "Word Documents|*.docx";
+                dlg.Filter = "Word Documents|*.docx;*.docm";
                 dlg.Title = "Select a Word Document";
 
                 if (dlg.ShowDialog() == DialogResult.OK)
