@@ -163,7 +163,11 @@ namespace SummaryTableCreator.Reports
 
             foreach (var phase in phases)
             {
-                var phaseIssues = issues.Where(i => i.PhaseName == phase.PhaseName).ToList();
+                // Get all issues for this phase, excluding remediated ones
+                var phaseIssues = issues
+                    .Where(i => i.PhaseName == phase.PhaseName && 
+                               !i.Severity?.Equals("Remediated", StringComparison.OrdinalIgnoreCase) == true)
+                    .ToList();
 
                 var stats = new Dictionary<string, int>();
 
