@@ -235,7 +235,7 @@ namespace SummaryTableCreator.Reports
             AddIssueSummaryHeaderRow(table, useSingleLevelCvss);
 
             // Add data rows for each phase
-            foreach (var kvp in summaryStats.OrderBy(k => k.Key))
+            foreach (var kvp in summaryStats)
             {
                 AddIssueSummaryDataRow(table, kvp.Key, kvp.Value, false, useSingleLevelCvss);
             }
