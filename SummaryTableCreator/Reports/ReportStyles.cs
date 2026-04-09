@@ -42,6 +42,7 @@ namespace SummaryTableCreator.Reports
         public const string COLOR_MEDIUM = "TXTSEVMEDIUM";    // Orange
         public const string COLOR_LOW = "TXTSEVLOW";          // Light Blue
         public const string COLOR_INFORMATIONAL = "TXTSEVINFO"; // Grey
+        public const string COLOR_REMEDIATED = "TXTSEVREM"; // Green
 
 
         /// <summary>
@@ -56,7 +57,8 @@ namespace SummaryTableCreator.Reports
                 "medium" => COLOR_MEDIUM,
                 "low" => COLOR_LOW,
                 "informational" or "info" => COLOR_INFORMATIONAL,
-                _ => "00b050" // Green for remediated or unknown severity
+                "remediated" => COLOR_REMEDIATED,
+                _ => CELL_STYLE // Green for remediated or unknown severity
             };
         }
     }

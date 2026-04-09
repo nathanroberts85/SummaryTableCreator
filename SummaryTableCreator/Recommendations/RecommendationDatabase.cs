@@ -18,6 +18,16 @@ namespace SummaryTableCreator.Recommendations
         }
 
         /// <summary>
+        /// Reloads all JSON files from the data directory.
+        /// </summary>
+        public void Reload()
+        {
+            _issueDescriptions.Clear();
+            _recommendations.Clear();
+            LoadIssueDescriptions();
+        }
+
+        /// <summary>
         /// Gets the issue table description for a given issue title.
         /// </summary>
         /// <param name="issueTitle">The title of the issue from the document.</param>

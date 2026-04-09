@@ -32,6 +32,14 @@ namespace SummaryTableCreator.Parser
         }
 
         /// <summary>
+        /// Reloads the recommendation database from JSON files.
+        /// </summary>
+        public void ReloadDatabase()
+        {
+            GetRecommendationDatabase().Reload();
+        }
+
+        /// <summary>
         /// Parses the document for findings under the specified section number.
         /// New format: Heading2 = Phase, Heading3 = Severity, Heading4 = Finding
         /// </summary>

@@ -100,6 +100,13 @@ namespace SummaryTableCreator
                 bool includeRecommendations = cb_recommendations.Checked;
                 Logger.Info($"[+] Extracting section {sectionLevel} from {filePath}");
 
+                // Reload database before parsing to pick up any JSON changes
+                if (includeRecommendations)
+                {
+                    Logger.Info("[+] Reloading issue descriptions database...");
+                    _parser.ReloadDatabase();
+                }
+
                 _results = _parser.Parse(filePath, sectionLevel, includeRecommendations).ToList();
                 // Count phases and issues separately
                 var phases = _results.Where(r => r.IsPhaseHeader).Count();
