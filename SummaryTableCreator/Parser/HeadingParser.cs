@@ -205,17 +205,33 @@ namespace SummaryTableCreator.Parser
         /// </summary>
         private int DetermineHeadingLevel(string? style, int? outlineLevel, string text, int sectionNumber)
         {
-            // Check explicit style/outline level (primary method)
-            if (string.Equals(style, "Heading4", StringComparison.OrdinalIgnoreCase) || outlineLevel == 3)
+            // Check outline level first (most reliable for styles based on headings)
+            if (outlineLevel == 3)
                 return 4;
-            if (string.Equals(style, "Heading3", StringComparison.OrdinalIgnoreCase) || outlineLevel == 2)
+            if (outlineLevel == 2)
                 return 3;
-            if (string.Equals(style, "Heading2", StringComparison.OrdinalIgnoreCase) || outlineLevel == 1)
+            if (outlineLevel == 1)
                 return 2;
+
+            // Check explicit style names (for documents without outline levels set)
+            if (string.Equals(style, "Heading4", StringComparison.OrdinalIgnoreCase))
+                return 4;
+            if (string.Equals(style, "Heading3", StringComparison.OrdinalIgnoreCase))
+                return 3;
+            if (string.Equals(style, "Heading2", StringComparison.OrdinalIgnoreCase))
+                return 2;
+
+            // Check custom heading style (HEADING1111 or HEADING_1_1_1_1 = Heading4)
+            if (!string.IsNullOrEmpty(style))
+            {
+                if (style.Equals("HEADING1111", StringComparison.OrdinalIgnoreCase) ||
+                    style.StartsWith("HEADING_1_1_1_1", StringComparison.OrdinalIgnoreCase))
+                    return 4;
+            }
 
             // Fall back to text pattern matching for edge cases (check most specific first)
             // Pattern: 6.1.2 Severity (just the word, like "High", "Medium", "Low")
-            if (Regex.IsMatch(text, $@"^{sectionNumber}\.\d+\.\d+\s+(High|Medium|Low|Critical|Informational)$", RegexOptions.IgnoreCase))
+            if (Regex.IsMatch(text, $@"^{sectionNumber}\.\d+\.\d+\s+(High|Medium|Low|Critical|Informational|Remediated)$", RegexOptions.IgnoreCase))
                 return 3;
             
             // Pattern: 6.1 Phase Name

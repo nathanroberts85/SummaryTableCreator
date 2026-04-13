@@ -4,6 +4,7 @@ using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Wordprocessing;
 using SummaryTableCreator.Models;
 using SummaryTableCreator.UI;
+using System.Text.RegularExpressions;
 
 namespace SummaryTableCreator.Reports
 {
@@ -346,8 +347,16 @@ namespace SummaryTableCreator.Reports
                     ReportStyles.SUMMARY_COL_TOTAL
                 };
 
+            // Clean phase name for display in summary table (remove "Phase X - " prefix)
+            var displayPhaseName = phaseName;
+            if (!isTotalsRow)
+            {
+                // Remove "Phase X - " or "Phase X – " prefix (supports both dash types)
+                displayPhaseName = Regex.Replace(phaseName, @"^Phase\s+\d+\s*[-–]\s*", "", RegexOptions.IgnoreCase).Trim();
+            }
+
             // First column (Phase name) - ALWAYS bold
-            row.AppendChild(CreateStyledCell(phaseName, ReportStyles.CELL_STYLE, false, null, true, widths[0]));
+            row.AppendChild(CreateStyledCell(displayPhaseName, ReportStyles.CELL_STYLE, false, null, true, widths[0]));
 
             int idx = 1;
             
@@ -376,7 +385,10 @@ namespace SummaryTableCreator.Reports
         private static void AddPhaseHeading(Body body, HeadingResult phase, int phaseNumber)
         {
             // Build heading text: "Phase X - Phase Name"
-            var headingText = $"Phase {phaseNumber} - {phase.PhaseName}";
+            // Check if phase name already starts with "Phase" to avoid duplication
+            var headingText = phase.PhaseName.StartsWith("Phase", StringComparison.OrdinalIgnoreCase)
+                ? phase.PhaseName
+                : $"Phase {phaseNumber} - {phase.PhaseName}";
             
             var heading = new Paragraph(
                 new ParagraphProperties(
