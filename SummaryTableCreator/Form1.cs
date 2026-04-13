@@ -38,14 +38,14 @@ namespace SummaryTableCreator
             toolTip1.ShowAlways = true;    // Show even when form is not active
 
             // Set tooltips for each control
-            toolTip1.SetToolTip(btn_import, "Select and import a Word document (.docx) for processing");
+            toolTip1.SetToolTip(btn_import, "Select and import a Word document (.docx/.docm) for processing");
             toolTip1.SetToolTip(nud_report_section, "Choose which report section to parse (e.g., section 6)");
             toolTip1.SetToolTip(btn_extract, "Extract headings and issues from the selected section");
             toolTip1.SetToolTip(cb_cvss, "Commercial format by default, enable to switch to CHECK format");
             //toolTip1.SetToolTip(cb_cvss_score, "Show numerical CVSS scores for later report compilation");
-            toolTip1.SetToolTip(cb_recommendations, "Populate the Issue Descriptions column with data from the JSON database");
-            toolTip1.SetToolTip(btn_generate_table, "Outputs the summary tables in new documents in the same folder");
-            toolTip1.SetToolTip(cb_interim_excel, "Outputs the summary table in Excel format with phases split on sheets");
+            toolTip1.SetToolTip(cb_recommendations, "Populate the Issue Descriptions and Recommendations columns with data from the JSON database");
+            toolTip1.SetToolTip(btn_generate_table, "Outputs the summary tables in new documents in the same folder as the report");
+            toolTip1.SetToolTip(cb_interim_excel, "Outputs the summary table in Excel format in the same folder as report with phases split on sheets");
         }
 
         private void btn_import_Click(object sender, EventArgs e)

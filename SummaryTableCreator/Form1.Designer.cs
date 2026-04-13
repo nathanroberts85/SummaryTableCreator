@@ -59,7 +59,7 @@
             rtb_log.ReadOnly = true;
             rtb_log.Size = new Size(484, 532);
             rtb_log.TabIndex = 0;
-            rtb_log.Text = "[+] Summary of Findings Table Generator v2.0\n\n!! Now with 500% more Vitamin D !!";
+            rtb_log.Text = "[+] Summary of Findings Table Generator v2.1\n\n!! Now with 500% more Vitamin D !!";
             // 
             // btn_import
             // 
@@ -232,7 +232,7 @@
             MinimumSize = new Size(825, 595);
             Name = "Form1";
             StartPosition = FormStartPosition.CenterScreen;
-            Text = "vegeTables v2.0";
+            Text = "vegeTables v2.1";
             ((System.ComponentModel.ISupportInitialize)nud_report_section).EndInit();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).EndInit();
             ResumeLayout(false);
